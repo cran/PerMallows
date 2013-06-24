@@ -1,0 +1,20 @@
+\name{cycles2permutation}
+\alias{cycles2permutation}
+\title{Get the permutation given the cycles}
+\usage{
+cycles2permutation(cycles)
+}
+\arguments{
+  \item{cycles}{a list with the set of disjoint cycles}
+}
+\value{
+the permutation in vector notation
+}
+\description{
+Get the permutation as a vector given the set of cycles in
+which it factorizes
+}
+\examples{
+cycles2permutation(permutation2cycles(c(1,5,2,3,4)))
+}
+

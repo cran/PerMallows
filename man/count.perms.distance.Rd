@@ -1,0 +1,34 @@
+\name{count.perms.distance}
+\alias{count.perms.distance}
+\title{Count permutations at a distance}
+\usage{
+count.perms.distance(perm.length, dist.value, dist.name = "kendall",
+  disk = FALSE)
+}
+\arguments{
+  \item{perm.length}{number of items in the permutations}
+
+  \item{dist.value}{the distance}
+
+  \item{dist.name}{optional. One of: kendall (default),
+  cayley, hamming, ulam}
+
+  \item{disk}{optional can only be true if counting the
+  permutations at each Ulam distance. Insted of generating
+  the whole set of SYT and count of permutations per
+  distance, it loads the info from a file in the disk}
+}
+\value{
+the number of permutations at the given distance
+}
+\description{
+Given a distance (kendall, cayley, hamming or ulam), the
+number of items in the permutations and distance value d,
+how many permutations are there at distance d from any
+permutation?
+}
+\examples{
+count.perms.distance(4,1,'ulam')
+count.perms.distance(4,2,'hamming')
+}
+

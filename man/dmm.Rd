@@ -1,0 +1,33 @@
+\name{dmm}
+\alias{dmm}
+\title{Calculate the probability of a permutation in a MM}
+\usage{
+dmm(perm, sigma0 = identity.permutation(length(perm)), theta,
+  dist.name = "kendall")
+}
+\arguments{
+  \item{perm}{permutation whose probability is asked for}
+
+  \item{sigma0}{optional central permuation of the MM, by
+  default the identity}
+
+  \item{theta}{dispersion parameter of the MM}
+
+  \item{dist.name}{optional name of the distance used in
+  the MM. One of: kendall (default), cayley, hamming, ulam}
+}
+\value{
+the probability of sigma in the given MM
+}
+\description{
+Calculate the probability of a permutation sigma in a MM of
+center sigma0, dispersion parameter theta and under the
+specified distance
+}
+\examples{
+sample <- matrix(c(1,2,3, 4,1,4,3,2,1,2,4,3), nrow = 3, ncol = 4, byrow = TRUE)
+sig<-c(1,2,3,4)
+log.prob <- apply(sample,MARGIN=1,FUN=function(x){log(dmm(x,sig, 1,'cayley'))})
+sum(log.prob)
+}
+

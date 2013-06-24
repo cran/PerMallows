@@ -1,0 +1,1381 @@
+\documentclass[article,nojss]{jss}
+
+\usepackage{graphicx, amsmath, multirow, color,amsfonts}
+\usepackage[ruled,vlined]{algorithm2e}
+\newtheorem{defDef}{Definition}
+\makeatletter
+\newcommand{\nosemic}{\renewcommand{\@endalgocfline}{\relax}}% Drop semi-colon ;
+\newcommand{\dosemic}{\renewcommand{\@endalgocfline}{\algocf@endline}}% Reinstate semi-colon ;
+\newcommand{\pushline}{\Indp}% Indent
+\newcommand{\popline}{\Indm\dosemic}% Undent
+\makeatother
+\SetKwBlock{probblock}{with probability}{end} 
+\SetKwBlock{elseblock}{otherwise}{end} 
+
+
+
+
+% 
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+% %% declarations for jss.cls %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+% %% almost as usual
+\author{
+  Ekhine Irurozki % \\ University of the Basque Country
+	\And 
+	Borja Calvo \\ University of the Basque Country
+	\And
+	Jose A. Lozano \\ %University of the Basque Country
+        }
+\title{\pkg{PerMallows}: An \proglang{R} Package for Mallows and Generalized Mallows Models}
+
+\Plainauthor{Ekhine Irurozki, Borja Calvo, Jose A. Lozano} %% comma-separated
+\Plaintitle{PerMallows: An R Package for Mallows and Generalized Mallows Models} %% without formatting
+\Shorttitle{\pkg{PerMallows}:  An R Package for MM and GMM} %% a short title (if necessary)
+%\citep{Irurozki2014c,Irurozki2014,Irurozki2014a}
+%% an abstract and keywords
+
+\Abstract{
+In this paper we present the \proglang{R} package \pkg{PerMallows}. It includes functions to work with the Mallows, Generalized Mallows and Weighted Mallows models. \pkg{PerMallows} includes functions for making inference, sampling and learning such distributions, some of which are novel in the literature. As a by-product, \pkg{PerMallows} also includes operations for permutations, paying special attention in those related with the Kendall's-$\tau$, Cayley, Ulam and Hamming distances and the random generation of permutations. 
+}
+
+\Keywords{
+ranking, permutation, kendall's-$\tau$, cayley, hamming, ulam, inversion, swap, cycle, fixed point, longest increasing subsequence, mallows, generalized mallows, weighted mallows, learning, sampling, \proglang{R}
+}
+\Plainkeywords{ranking, permutation, kendall, cayley, hamming, ulam, inversion, swap, cycle, fixed point, longest increasing subsequence, mallows, generalized mallows, weighted mallows, learning, sampling, R} %% without formatting
+%% at least one keyword must be supplied
+
+
+%% publication information
+%% NOTE: Typically, this can be left commented and will be filled out by the technical editor
+%% \Volume{50}
+%% \Issue{9}
+%% \Month{June}
+%% \Year{2012}
+%% \Submitdate{2012-06-04}
+%% \Acceptdate{2012-06-04}
+
+%% The address of (at least) one author should be given
+%% in the following format:
+\Address{
+  Ekhine Irurozki, Borja Calvo, Jose A. Lozano\\
+  E-mail: \email{\{ekhine.irurozqui\}\{borja.calvo\}\{ja.lozano\}@ehu.es}\\
+  Intelligent Systems Group\\
+  Department of Computer Science and Artificial Intelligence\\
+  Faculty of Computer Science\\
+  University of the Basque Country\\
+  20008 Donostia, Spain\\
+  URL: \url{http://www.sc.ehu.es/ccwbayes/isg/}
+}
+%% It is also possible to add a telephone and fax number
+%% before the e-mail in the following format:
+%% Telephone: +43/512/507-7103
+%% Fax: +43/512/507-2851
+
+%% for those who use Sweave please include the following line (with % symbols):
+%% need no \usepackage{Sweave.sty}
+
+%% end of declarations %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+\section{Introduction} 
+Permutations are ordered sets of items that arise naturally in many domains, such as genomics \citep{Bader11}, cryptography, scheduling or computer vision \citep{NIPS2012_0012}. One of the hottest topics is preference learning \citep{Preferences}, since its commercial applications have increased exponentially in the last years. 
+
+The particularities of permutation data does not allow us to straightforwardly adapt the methodology used over other domains to the permutations domain. Consider, for example, the notion of independence. For a distribution over binary variables, independence between two variables implies that the first variable will have a value or 0 or 1 regardless of the value of the second variable. However, any two given positions of a permutation can not have the same value by any chance, so the classic notion of independence does not naturally translate into the permutations domain. 
+
+The conclusion is that permutation spaces need specific probability models and concepts. However, the requirements for these models are very much the same, that is, the ability to accurately model real data and the efficient computation of the most common operations, such as inference, learning and sampling. In order for these operations to be efficient, the particular nature of permutations must be considered. In other words, efficient algorithms for dealing with permutations and its common operations are the key to efficient algorithms for probability models over permutations. 
+
+We have implemented two of the most popular probability models on permutations, the Mallows model (MM) \citep{mallows} and the Generalized Mallows model (GMM) \citep{gMallows} and an adaptation of the GMM which goes by the name of Weighted Mallows model (WMM) \citep{Irurozki2014a}. They all are exponential models and rely on a distance for permutations. The MM has been used to define a family of models that considers any of the following distances: Kendall's-$\tau$, Cayley, Ulam, Hamming, Spearman's-$\rho$ and Spearman's footrule. This family is referred to as distance-based models \citep{diaconis88}. Moreover, when the distance for permutations is Kendall's-$\tau$ the MM is also known as the Mallows $\phi$-model \citep{critchlow91}. 
+
+The GMM is the most referenced among the extensions of the MM. The GMM under the Kendall's-$\tau$ distance is also known as Mallows $\phi$-component model. Like the MM, the GMM is also a unimodal distribution. However, instead of one single spread parameter, GMM makes use of $n-1$ dispersion parameters. The idea is to model situations in which the distribution is close to uniformity for some positions of the permutation while being close to the mode for some others. 
+
+The literature includes many theoretical discussion references \citep{Fligner1988}, \citep{critchlow91}, \citep{gMallows} as the analysis of the asymptotic properties of, for example, the length of the longest increasing subsequence (LIS) \citep{Mueller2013}, \citep{feray2012}. Moreover, its practical relevance is supported by the application papers in different disciplines such as Preference Elicitation \citep{Chen04}, Information Retrieval \citep{farah}, Classification \citep{Cheng2009}, Label Ranking \citep{conf/isnn/ChengH09} or Evolutionary Algorithms \citep{cebe2011b}. The models can be easily extended and adapted, as done for non-parametric models \citep{Mao2008}, infinite permutations \citep{Gnedin2012615}, \citep{meila08}  and mixture models \citep{D'Elia2005917}, \citep{Meila2010}, \citep{Murphy2003645}, \citep{Lee20122486} signed permutations \citep{DBLP:conf/aistats/AroraM13}
+
+The four metrics for permutations considered in the \pkg{PerMallows} package are Kendall's-$\tau$, Cayley, Hamming and Ulam. Each of these distances reflects a different nature: The Kendall's-$\tau$ distance is related with the number of inversions of a permutation, Cayley is related with the number of swaps and also with the cyclic structure of permutations, Hamming is related with the number of fixed points and Ulam with the longest common subsequence between two permutations. 
+
+%%other pack
+This is not the first package in the literature to deal with distributions over permutations. The \pkg{prefmod} package \citep{prefmod} models preference data in the form of paired comparisons. In the particular case of the distance-based models, there exist two packages. The \pkg{RMallow} package uses a EM algorithm to fit mixtures of MM under the Kendall's-$\tau$ distance to full or partial rankings, with and without ties as described in \cite{Murphy2003645}. The \pkg{pmr} (Probability Models for Ranking Data) on the other hand, considers Luce's model \citep{critchlow91}, MM and GMM under the Kendall's-$\tau$, Spearman's-$\rho$,  Spearman's-$\rho^2$  and foot-rule distances. The package is aimed at helping in the analysis of preference data in tasks such as visualizing data and computing descriptive statistics. It implements functions for the maximum likelihood estimation for the parameters of the MM and extensions thereof similar to the GMM.
+
+%---  motivation  (lacks)
+None of the aforementioned packages offer a wide range of functionalities so as to be considered a complete toolbox for reasoning on permutation data. There is no way of generating permutations from a given model or calculating the probability of a permutation under a certain model for example. Moreover, none of the packages consider the algebraic machinery necessary for the efficient management of functions over permutations spaces, from basic operations such as compositions or factorization of permutations into disjoint cycles to complex combinatorial functions such as counting or generating permutations. 
+
+Regarding the distance metrics, in the packages in the literature dealing with distance-based models only Spearman's-$\rho$, Spearman's-$\rho^2$ Spearman's-foot-rule and Kendall's-$\tau$  have been considered, which are the most natural for the preference domain. However, the application of permutations is beyond the preference or voting domain and the Cayley, Hamming or Ulam metrics are more natural in fields such as computer vision, biology, cryptography, matching or card shuffling. 
+
+%---our pack
+\pkg{PerMallows}, a freely available \proglang{R} package, aims to be a compilation of functions for working on distance-based probability models MM and GMM under the Kendall's-$\tau$, Cayley, Hamming and Ulam. The utilities include the following functions:
+\begin{itemize}
+ \item Functions for dealing with MM and extensions thereof: learning the parameters from a  collection of permutations, sampling permutations from a given distribution, computation of the expectation, marginal probabilities and computation of the probability of a permutation. Several algorithms for each of the tasks are offered, including approximate and exact algorithms.
+ \item Distance related functions: compute distances between permutations, generate permutations at random at a given distance, count the number of permutations at a given distance, etc.
+ \item Operations with permutations: generation of all permutations of a given number of items, inversion, composition, different operators such as, for example, swapping or transposing items, descriptive statistics, factorization of permutations, etc.
+\end{itemize}
+
+This paper is organized as follows. Section~\ref{sec:permus_models} comprises the basic definitions and results related with permutations and probability models. In particular, Section~\ref{sec:permus} introduces the notation and basic concepts on permutations, several operations for dealing with this particular data type are also introduced and explained. The probability models, MM and GMM, are detailed in Section~\ref{sec:models} while sections \ref{sec:sampling} and \ref{sec:learning} introduce several algorithms for sampling and learning respectively. The usage of the \pkg{PerMallows} package is shown in Section~\ref{sec:usage}. Section~\ref{sec:conclusion} concludes the paper.
+
+\section{Dealing with permutations}%%-----------------------		PERMUS		----------------------
+\label{sec:permus_models}
+In this section we give the theoretical background for the understanding of the functions in the \pkg{PerMallows} package. It is divided into four parts. First, the notions over permutations are given. Then, we briefly describe MM and GMM. The last two parts are devoted to the learning and sampling algorithms for the MM and GMM included in \pkg{PerMallows}.
+
+\subsection{Permutations and metrics}
+\label{sec:permus}
+Permutations are bijections of the set of integers $\{1, \ldots , n\}$ onto itself. We will denote permutations with Greek letters, mostly $\pi$ and $\sigma$. In the permutation $\sigma=[2413]$ we will say that item 2 is at position 1 and denote it $\sigma(1)=2$. The permutation that places every item $i$ at position $i$ is called the identity permutation and it is denoted as $e=[123\ldots n]$. 
+
+For every permutation $\sigma$, its inverse is denoted as $\sigma^{-1}$ and defined as $\sigma^{-1}(i)=j \Leftrightarrow \sigma(j)=i$. Two permutations can be composed resulting in a new permutation. The composition operation, denoted $\sigma \circ \pi$ or $\sigma \pi$, is defined as  $\sigma \pi(i) = \sigma(\pi(i))$. It is worth noticing that $\sigma \sigma^{-1} = e$.
+
+There are many distance metrics for permutations. Four are considered in \pkg{PerMallows}, Kendall's-$\tau$, Cayley, Ulam and Hamming. All these metrics are right invariant, meaning that for every permutation $\tau$, $d(\sigma, \pi)=d(\sigma \tau, \pi \tau)$. In particular taking $\tau=\pi^{-1}$ and since $\pi \pi^{-1}=e$, one can w.l.o.g. write $d(\sigma, \pi)=d(\sigma \pi^{-1}, e)$. The right invariant property implies that we can always take the identity permutation as the reference. For the sake of clarity, the distance is denoted as a one parameter function when the reference permutation is the identity, $d(\sigma \pi^{-1}, e) = d(\sigma \pi^{-1})$ which simplifies the notation. 
+
+\paragraph{Kendall's-$\tau$}
+The Kendall's-$\tau$ distance $d_k(\sigma \pi^{-1})$ counts the number of pairwise disagreements between $\sigma$ and $\pi$, i.e., the number of item pairs that have a relative order in one permutation and a different order in the other. We can equivalently define $d_k(\sigma\pi^{-1})$ as the number of adjacent swaps to convert $\sigma^{-1}$ into $\pi^{-1}$. The maximum value of the Kendall's-$\tau$ distance between two permutations is $n(n-1)/2$. It is used mainly in voting theory and it is sometimes called bubble sort distance because $d_k(\sigma)$ equals the number of adjacent swaps that the bubble sort algorithm performs to order the items in $\sigma$ increasingly. The Kendall's-$\tau$ distance can be computed in time $O(n^2)$.
+
+A distance decomposition vector $V(\sigma)=(V_1(\sigma), \ldots, V_{n-1}(\sigma))$ can be defined such that $d_k(\sigma) = \sum_{j=1}^{n-1} V_j(\sigma)$ where $V_j(\sigma)$ equals the number of times that the bubble sort algorithm swaps item $\sigma(j)$. It follows that $0\leq V_j(\sigma) \leq n-j$ for $1\leq j \leq n$. Note that $V_j(\sigma)$ is also equal to the number of items smaller than $\sigma(j)$ in the tail of the permutation, and that it can be expressed as follows:
+
+\begin{equation}
+ V_j(\sigma) = \sum_{i=j+1}^n I(\sigma(i) < \sigma(j))	
+ \label{eq:kendall_decomp}
+\end{equation}
+where $I(\cdot)$ denotes the indicator function. It is worth noticing that there is a bijection between each $\sigma \in S_n$ and each possible $V(\sigma)$ vector. Therefore, when dealing with the Kendall's-$\tau$ distance we can use the $V(\sigma)$ vector as an alternative representation of $\sigma$. The conversion from $V(\sigma)$ to $\sigma$ and vice versa is supported in \pkg{PerMallows} and done in time $O(n^2)$.
+
+\paragraph{Cayley}
+The Cayley distance $d_c(\sigma\pi^{-1})$ counts the number of swaps (not necessarily adjacent) that have to be made to transform $\sigma$ into $\pi$. The maximum value of the Cayley distance between two permutations is $n-1$. When the reference permutation is the identity, $d_c(\sigma)$ equals $n$ minus the number of cycles of $\sigma$. Recall that for every $1\leq i,j\leq n$ such that $\sigma(i)=j$, then $i$ and $j$ are in the same cycle, and therefore, $\sigma=[156423]$ is written in cycle notation as $(1) (2,5) (3,6) (4)$. It can be computed in time $O(n)$. Cayley distance $d_c(\sigma)$ can be decomposed into a vector $X(\sigma)$ of $n-1$ binary terms,  $X(\sigma)= (X_1(\sigma), \ldots, X_{n-1}(\sigma))$ where $X_j(\sigma) = 0 $ iff $j$ is the largest item in its cycle in $\sigma$. It follows from the definition that $d_c(\sigma) = \sum_{j=1}^{n-1} X_j(\sigma)$. Contrary to the Kendall's-$\tau$ distance, there is not a bijection between every possible $X(\sigma)$ vector and $\sigma \in S_n$: although each $\sigma \in S_n$ has one unique decomposition vector $X(\sigma)$, the opposite is not necessarily true. \citep{Irurozki2014b} provides two algorithms that given $X(\sigma)$, randomly generate a permutation $\sigma$ consistent with $X(\sigma)$ and assuming that every permutation consistent with $X(\sigma)$ is equally probable. The conversions from a permutation $\sigma$ to  $X(\sigma)$ is also supported in \pkg{PerMallows}. The three conversions have time complexity $O(n)$.
+
+\paragraph{Hamming}
+The Hamming distance $d_h(\sigma\pi^{-1})$ counts the number of point-wise disagreements between two permutations. The maximum value of the Hamming distance between two permutations is, therefore, $n$. It is worth noticing that there is no pair of permutations $\sigma$ and $\pi$ such that $d(\sigma , \pi)=1$. The Hamming distance is closely related to the concepts of fixed and unfixed points. A fixed point in $\sigma$ is a position $i$ where $\sigma(i) = i $ while the opposite is an unfixed point. The relation between the Hamming distance and the fixed points comes from the fact that the Hamming distance to the identity, $d_h(\sigma)$, counts the number of unfixed points in $\sigma$. It can be computed in time $O(n)$.
+
+The notion of fixed points leads to the decomposition vector of the Hamming distance, $H(\sigma) = (H_1(\sigma), \ldots, H_{n}(\sigma))$ where $H_j(\sigma) = 0 $ iff $j$ is a fixed point in $\sigma$. Consequently, $d_h(\sigma) = \sum_{j=1}^{n} H_j(\sigma)$. Note that every $\sigma\in S_n$ has a unique $H(\sigma)$ but the opposite is not necessarily true. The conversion from $\sigma$ to $H(\sigma)$ and the generation uniformly at random of $\sigma$ consistent with a given $H(\sigma)$ are both supported in \pkg{PerMallows} and have complexity $O(n)$.
+
+\paragraph{Ulam} 
+The Ulam distance $d_u(\sigma\pi^{-1})$ counts the length of the complement of the longest common subsequence (LCS) in $\sigma$ and $\pi$, i.e., the number of items which are not part of the LCS. The maximum value of the Ulam distance between two permutations is $n-1$. If the reference permutation is the identity, $d_u(\sigma)$ equals $n$ minus the length of the longest increasing subsequence (LIS). The classical example to illustrate the Ulam distance $d_u(\sigma, \pi)$ considers a shelf of books in the order specified by $\sigma$ \citep{diaconis88}. The objective is to order the books as specified by $\pi$ with the minimum possible number of movements, where a movement consists of taking a book and inserting it in another position (delete-insert). The minimum number of movements is exactly $d_u(\sigma, \pi)$. 
+
+A permutation can possibly have several LIS, as for example $\sigma = [7615243]$, where there are two LIS of length 3, one consisting of items 1, 2 and 4 and the other one consisting of items 1, 2 and 3. 
+
+The complexity of computing the Ulam distance between two given permutations is $O(n \, log \, l)$ where $l$ is the length of the longest increasing subsequence. 
+
+\subsubsection{Counting and generating permutations}%%%%--------------------------------	counting and generating	-------------------------------------------------------------
+\label{sec:counting}
+The random generation of permutations is  a problem of interest in many disciplines. The uniformly at random generation, for example, can be efficiently carried out with the well known Fisher-Yates shuffle (also known as Knuth shuffle). A more restrictive version of the problem is that of generating a permutation at distance $d$ from the identity. This problem is closely related to that of counting the number of permutations at distance $d$ from the identity. In this section we show how to solve these two problems, that is:
+\begin{itemize}
+\item Given the number of items $n$ and a distance $d$, how many permutations are there at distance $d$ from the identity, $e$?
+\item Given the number of items $n$ and a distance $d$, generate uniformily at random a permutation at the given distance from $e$.
+\end{itemize}
+
+Clearly, the number of permutations depends on whether the distance is Kendall's-$\tau$, Cayley, Hamming or Ulam. The question of counting the number of permutations at distance $d$, denoted $S(n,d)$, has been largely studied for several distances. There is no closed expression for $S(n,d)$ for any of the metrics in this paper. Fortunately, these sequences appear in the Online encyclopedia of Integer Sequences (OEIS)\footnote{\url{http://oeis.org/}} for every metric  considered in \pkg{PerMallows} for different values of $n$ and $d$, as well as some recursions to obtain them. 
+
+\paragraph{Kendall's-$\tau$}
+The number of permutations at each possible Kendall's-$\tau$ distance, $S_k(n,d)$, is the sequence with code A008302 in the OEIS. Its computational cost is $O(n \cdot d_{max}) \equiv O(n^3)$. 
+
+The next question is the uniformly at random generation of a permutation at distance $d$ from the identity. Note that this is equivalent to generating a permutation with a given number of inversions, which, until now, was an open problem \citep{Arndt2010}. We now propose a novel algorithm to solve this question. 
+
+Recall that there is a bijection between every permutation $\sigma$ of $n$ items and every possible $V(\sigma)$ decomposition vector. Every position $1\leq j < n$ of vector $V(\sigma)$, $V_j(\sigma)$, is restricted to having values $0\leq (n-j)$. Moreover, $d_k(\sigma) = \sum_{j=1}^{n-1}V_j(\sigma)$. The problem of randomly generating a permutation at distance $d$ from the identity is thus equivalent to that of randomly generating a vector $V(\sigma)$ such that $0 \leq V_j(\sigma) \leq (n-j)$ for  $1\leq j< n$. This induces the next alternative representation for the problem: Given $n-1$ buckets of capacity $n-1,n-2,n-3,\ldots ,1$, distribute $d$ indistinguishable balls in such a way that any possible configuration is equally probable.
+
+Since the number of permutations of $n$ items at Kendall's-$\tau$ distance $d$ is $S_k(n,d)$, then, the number of $V(\sigma)$ vectors such that $ \sum_{j=1}^{n-1}V_j(\sigma)=d$ is $S_k(n,d)$. Equivalently, the number of ways to distribute $d$ indistinguishable balls into $n-1$ buckets of capacity $n-1,n-2,n-3,\ldots ,1$ is $S_k(n,d)$.
+
+We approach this problem with a recursive procedure. Its base case is $d \leq 0$ where nothing is done. In the general case, we introduce $k$ balls in the first bucket and then recursively solve the problem with the rest of the $n-2$ buckets and $d-k$ balls. The main question is how to choose $k$ if we want every configuration to be equally probable. The insertion of $k$ balls in the first bucket implies that there will be $S_k(n-1, d-k)$ possible ways to introduce the $d-k$  remaining balls into the $n-2$ remaining buckets. In other words, of the $S_k(n,d)$ total possible configurations of distributing $d$ balls in the $n-1$ buckets, exactly $S_k(n-1, d-k)$ of them will have $k$ balls in the first bucket. Therefore, for a u.a.r. distribution of the balls into the buckets, the probability of introducing $k$ balls in the first bucket is
+\[	\frac{S_k(n-1,d-k)}{S_k(n,d)}	\]
+
+The analogy with the generation of the $V(\sigma)$ vector is quite trivial. Instead of the $n-1$ buckets of capacity $n-1,n-2,n-3,\ldots ,1$, we have a vector $V(\sigma)$ of $n-1$ positions, each restricted to have values smaller than or equal to $n-1,n-2,n-3,\ldots ,1$. The base case is the situation when $d \leq 0$. In this case the output and input vectors are the same. Otherwise, we randomly choose $k$, where the probability of  setting $P(V_1(\sigma)=k)$ equals $S_k(n-1,d-k)/S_k(n,d)$. Then, we recursively solve the problem of inserting $d-k$ balls into the remaining positions of the vector, $V_2(\sigma), \ldots , V_{n-1}(\sigma)$. 
+
+Regarding the computational complexity of the current algorithm, if the values for $S_k(n,d)$ are given, the cost of generating a permutation at Kendall's-$\tau$ distance $d$ is $O(n^2)$.
+
+\paragraph{Cayley}
+Recall that the Cayley distance $d_c(\sigma)$ equals $n$ minus the number of cycles of $\sigma$. Therefore, the number of permutations at Cayley distance $d$, $S_c(n,d)$,  equals the number of permutations with $k=n-d$ cycles. The number of permutations of $n$ items with $k$ cycles is given by the Stirling numbers of the first kind, which has code A008275 in the OEIS. The time complexity of computing the Stirling numbers is $O(n \cdot d_{max}) \equiv O(n^2)$. 
+
+\pkg{PerMallows} also includes a recursive process for the u.a.r. generation of a permutation at Cayley distance $d$. Briefly, the generation of a permutation of $n$ items and $k$ cycles implies firstly, the recursive generation of a permutation of the first $n-1$ items and then, the insertion of item $n$. This is due to the fact that the whole set of permutations of $n$ items and $k$ cycles can be split into two groups: The group of permutations in which item $n$ is in a cycle of length one, i.e. $\sigma(n)\equiv n$, and the group of permutations in which item $n$ is in a cycle of length greater than one ($\sigma(n) \neq n$). If the cardinality of those sets can be given, the generation of the permutation can be efficiently performed. 
+
+The computational cost of generating a random permutation at Cayley distance $d$ from the identity given the Stirling numbers is $O(n)$. Details of the procedure can be found in \cite{Irurozki2014b}. 
+
+\paragraph{Hamming}
+The question of counting the number of permutations at Hamming distance $d$, $S_h(n,d)$ is closely related to the notion of derangement, that is, a permutation with no fixed point. Recall that, in a permutation at Hamming distance $d$ there are $d$ unfixed points, i.e., there are $d$ items that form a derangement. Therefore, the number of permutations of $n$ items at Hamming distance $d$ is
+\[	S_h(n,d) = \binom{n}{d}S(d) \quad \text{where $S(d)$ is the number of derangements of $d$ items}	\]
+
+The number of derangements of $n$ items is the sequence with code A000166 in the OEIS. Even though there is no closed form for $S(d)$, the time complexity for the computation of $S(d)$ is $O(d)$, so $S_h(n,d)$ has time complexity $O(n)$. 
+
+\pkg{PerMallows} also includes a recursive process for the u.a.r. generation of a permutation of $n$ items at Hamming distance $d$. It is based on the random generation of a derangement of $d$ items, which is a well known problem \citep{akl02}. The details of this process can be found in \cite{Irurozki2014a}.
+
+\paragraph{Ulam}
+Algorithms for counting $S_u(n,d)$ and for the u.a.r. generation of permutations of $n$ items at Ulam distance $d$ are included in \pkg{PerMallows}. The sequence $S_u(n,d)$ appears in the OEIS with code A126065.
+
+Both processes of counting and generating permutations at a given Ulam distance are related with the notions of Ferrers diagrams (FD) and Standard Young Tableaux (SYT). The link between SYT and permutations is given by the celebrated  Robinson-Schensted-Knuth (RSK) correspondence. A self contained explanation of the computation of $S_u(n,d)$ and the random generation of permutations at a given Ulam distance can be found in \cite{Irurozki2014}. The complexity of the counting and generating processes is equivalent to the complexity of enumerating the partitions of $n$, which has not got any closed form.
+
+\paragraph{}
+Counting permutations at a given distance is a crucial operation, not only for the random generation of permutations, but also for the learning and sampling processes. Among the distances considered, Ulam is the most expensive from a computational perspective. If a user needs to work usually with with permutations of a particular $n$ (for large $n$, say $n>50$), \pkg{PerMallows} includes functions to speed the computation up. The idea is to generate files containing relevant information such as the counts of the permutations at each possible distance. 
+
+\subsection{Probability distributions over permutations}%%%%--------------------------------	DISTRIBUTIONS	-------------------------------------------------------------
+\label{sec:models}
+This section introduces the Mallows model \citep{mallows} and its most popular extension, the Generalized Mallows model \citep{gMallows}. 
+
+\subsubsection{Mallows model}%%%%--------------------------------	MM	-------------------------------------------------------------
+The Mallows model (MM) was one of first probability models proposed for rankings or permutations. However, it is still one of the most used models in both theoretical and application papers. It is an exponential model defined by the central permutation $\sigma_0$ and the spread (or dispersion) parameter $\theta$. When $\theta>0$, $\sigma_0$ is the mode of the distribution, i.e., the permutation with the highest probability. The probability of any other permutation decays exponentially as its distance to the central permutation increases. The spread parameter controls how fast this fall happens. It can be expressed as follows:
+\begin{equation}
+p(\sigma) = \frac{exp(-\theta d(\sigma \sigma_0^{-1})) }{\psi(\theta)} 
+\nonumber
+%\label{eq:mallows}
+\end{equation}
+
+\noindent 
+where $\psi(\theta)$ is the normalization constant. It is considered as the analogous distribution of the Gaussian distribution for distributions over permutations. Note that when the dispersion parameter $\theta$ is greater than 0, then $\sigma_0$ is the mode. On the other hand, with $\theta = 0$ we obtain the uniform distribution and when $\theta <0$ then $\sigma_0$ is the anti-mode, i.e., the permutation with the lowest probability.
+ 
+\subsubsection{Generalized Mallows model}%%%%--------------------------------	GMM	-------------------------------------------------------------
+This extension of the MM tries to break the restriction that imposes every permutation at the same distance to have the same probability value. Instead of one single spread parameter, the generalized Mallows model (GMM) requires the definition of $n-1$ spread parameters $\theta_j$ for $1\leq j<n$, each affecting a particular position of the permutation. This allows modeling a distribution with more emphasis on the consensus of certain positions of the permutation while having more uncertainty about some others. Not every distance that can be used in the MM can also be used in GMM, since GMM requires the distance to be decomposed in $n-1$ terms as follows:
+
+\begin{equation}
+ d(\sigma\sigma_0^{-1}) = \sum_{j=1}^{n-1}S_j(\sigma\sigma_0^{-1})	
+ \label{eq:dist_decom}
+\end{equation}
+For any distance that decomposes as the above equation, the GMM is defined as follows:
+\begin{equation}
+ p(\sigma) =\frac{ exp(\sum _{j=1}^{n-1}-\theta_j S_j(\sigma \sigma_0^{-1}))}{\psi(\boldsymbol \theta)} 
+\nonumber 
+ \end{equation}
+
+\noindent 
+where the dispersion parameter $\boldsymbol \theta = (\theta_1 , \ldots , \theta_{n-1})$ is multidimensional and $\psi(\boldsymbol \theta)$ is the normalization constant. 
+
+\subsubsection{Normalization constant under each distance}%%%%-------------------------------- MM 	GMM metrics	-------------------------------------------------------------
+
+This section is devoted to the efficient computation of the normalization constants $\psi(\theta)$ (resp. $\psi(\boldsymbol \theta)$) of the MM (resp. GMM). The distribution and the normalization constants can be factorized under Kendall's-$\tau$ and Cayley distances but there is no known closed expression for the normalization constant of the models under Hamming or Ulam. In these cases, the naive computation consists of summing $n!$ terms, so it is infeasible for medium size values of $n$. In this section we show efficient formulas for $\psi(\theta)$ and $\psi(\boldsymbol\theta)$ and particular properties of both MM and GMM under each of the metrics considered are stated. 
+
+\paragraph{Kendall's-$\tau$}
+The Kendall's-$\tau$ distance can be used with the GMM since $d_k(\sigma)$ can be decomposed (see Equation~\eqref{eq:kendall_decomp}). Moreover, $\psi(\boldsymbol\theta)$ has a closed expression under the Kendall's-$\tau$ distance. The GMM under the Kendall's-$\tau$ distance can be expressed as follows \citep{gMallows}:
+\begin{equation}
+	p(\sigma) =  \prod _{j=1}^{n-1} \frac{exp(-\theta_j V_j(\sigma \sigma_0^{-1})) }{\psi_j(\theta_j)} 
+  \quad \quad \text{ where } \psi_j(\theta_j) = \frac{1-exp(-\theta_j (n-j+1))}{1-exp(-\theta_j)}	
+  \label{eq:gmm_kendall}
+\end{equation}
+
+Since the MM is the particular case of the GMM where every $\theta_j$ has equal value, this expression can also be used for the MM under the Kendall's-$\tau$ distance. 
+
+\paragraph{Cayley}
+Cayley distance can be decomposed as in Equation~\eqref{eq:dist_decom} as shown in Section~\ref{sec:permus}. Therefore, the GMM under the Cayley distance can be factorized and, as a consequence, $\psi(\boldsymbol\theta) = \prod _{j=1}^{n-1}\psi_j(\theta_j) $. Formally, the GMM under the Cayley distance can be written as follows:
+\begin{equation}
+	p(\sigma) =  \prod _{j=1}^{n-1} \frac{exp(-\theta_j X_j(\sigma \sigma_0^{-1})) }{\psi_j(\theta_j)} 
+  \quad\quad \text{ where } \psi_j(\theta_j) = (n-j) exp(-\theta_j ) +1   
+  \label{eq:gmm_cayley}
+\end{equation}
+
+Although the factorization was introduced in \cite{gMallows}, we correct here some typos of the original paper. Since the MM is the particular case of the GMM where every $\theta_j$ has equal value, this expression can also be used for the MM under the Cayley distance. 
+
+\paragraph{Hamming}
+The closed form of $\psi(\theta)$ under MM has already been given in \cite{gMallows}. An alternative expression and its proof can be found in \cite{Irurozki2014a}. The normalization constant of the MM under the Hamming distance is as follows:
+\begin{equation*}
+  \psi( \theta)  =  n! \, exp(-\theta n) \sum_{k=0}^n \frac{(exp(\theta)-1)^k}{ k!} 
+\end{equation*}
+
+The Hamming distance can not be decomposed as in Equation~\eqref{eq:dist_decom}. This means that there is no GMM under the Hamming distance. Nevertheless, the idea behind the GMM can be adapted for the Hamming distance defining a different dispersion parameter, $\theta_j$, $1 \leq j\leq n$, for each position of the permutation \citep{Irurozki2014a}. This version has been called Weighted Mallows model (WMM) under the Hamming distance and the normalization constant can be efficiently computed as follows:
+\begin{equation*}
+	\psi(\boldsymbol \theta) = exp(-\sum_j  \theta_j ) \sum_{k=0}^{n} (n-k)!   \gamma_{k}(exp(-\theta_1)-1, \ldots, exp(-\theta_n)-1)
+\end{equation*}
+\noindent where $\gamma_k$ is the Elementary Symmetric Polynomial of degree $k$ \citep{Irurozki2014a}.
+
+
+Both GMM and WMM allow modeling situations where there is a different consensus for different positions of the permutation. The most remarkable difference among GMM and WMM is that the former uses a vector of $n-1$ dispersion parameters and the latter uses $n$ dispersion parameters. However, for the sake of clarity and given their similarities, we will denote the WMM as a GMM.
+
+\paragraph{Ulam}
+The Ulam distance has not got a natural decomposition of the form of Equation~\eqref{eq:dist_decom} and, thus, the GMM cannot be defined under this metric. Moreover, for the MM there is not a closed form for the normalization constant $\psi(\theta)$. However, an efficient way of computing $\psi(\theta)$ can be found in \cite{Irurozki2014}. It is based on the fact that every permutation at the same distance has equal probability. Considering this fact, the normalization constant $\psi(\theta)=\sum _{ \sigma}  exp({-\theta d_u(\sigma \sigma_0^{-1})})$ can be expressed as the sum of $n$ terms in the following way:
+\begin{equation}
+\psi(\theta) = \sum _{d=0}^{n-1} S_u(n,d)  exp(-\theta d)
+\end{equation}
+
+This expression relies on the computation of the number of permutations of $n$ items at each possible Ulam distance, $ S_u(n,d)$.
+
+
+\subsection{Sampling}%%%%--------------------------------	SAMPLING	-------------------------------------------------------------
+\label{sec:sampling}
+\pkg{PerMallows} implements three different algorithms for generating permutations from a given distribution. 
+The Distances algorithm can generate samples from the MM, while the Multistage and Gibbs can generate samples from both MM and GMM.
+
+\subsubsection{Distances sampling algorithm}%%%%--------------------------------	DISTANCES	-------------------------------------------------------------
+The Distances sampling algorithm can generate samples from the MM under the Kendall's-$\tau$, Cayley \citep{Irurozki2014b}, Hamming \citep{Irurozki2014a} and Ulam \citep{Irurozki2014} metrics. It is based on the fact that every permutation at the same distance from the central permutation has the same probability. Therefore, it can be used to sample from the MM but not for the GMM. 
+
+This sampling method proceeds as follows. Let the metric $d(\sigma \sigma_0^{-1})$ range between  $0$ and $d_{max}$ for permutations of $n$ items. Also, let $S(n,d)$ be the number of permutations at distance $d$ from the identity permutation\footnote{Due to the invariance property, every permutation has the same number of permutations at distance $d$.}. Then, the probability of obtaining a permutation at distance $d$ is as follows:
+\begin{equation}
+p(\sigma | d(\sigma, \sigma_0)=d) = \frac{S(n,d) exp(-\theta d) }{\psi(\theta)}
+\label{eq:distances_sampling}
+\end{equation}
+Note that the normalization constant $\psi(\theta)=\sum _{ \sigma}  exp({-\theta d(\sigma \sigma_0^{-1})})$ can be expressed as the sum of $d_{max}$ terms in the following way:
+\begin{equation}
+\psi(\theta) = \sum _{d=0}^{d_{max}} S(n,d) exp(-\theta d)
+\nonumber
+\end{equation}
+
+Taking into consideration the previous expressions of the probability function, the process of simulating from the distribution can be carried out in three stages: 
+\begin{enumerate}
+	\item Randomly select the distance at which the permutation will lie using Equation~\eqref{eq:distances_sampling}. 
+	\item Pick uniformly at random a  permutation $\pi$ at distance $d$ from the identity permutation $e$, i.e. $d(\pi)=d$. This step relies on the u.a.r. generation of a permutation at a given distance. 
+	\item In case $\sigma_0= e$, then $\pi$ is output. Otherwise, the invariance property lets us obtain $\sigma = \pi \sigma_0$, since $d=d(\pi)=d(\pi \sigma_0, \sigma_0)=d(\sigma, \sigma_0)$.
+\end{enumerate}
+
+The complexity of computing the probabilities of step 1 is equivalent to the complexity of computing the number permutations per distance and has to be computed once per run. The second step is as complex as generating a permutation at a given distance. The complexities depend on the considered distance, see Section~\ref{sec:counting} for their explicit expression. 
+
+We can conclude that this is a quick as well as precise algorithm for the simulation of the MM. However, it has some limitations. First, it does not work with the GMM. Also, it is infeasible to keep $S(n,d)$ for values of $n>150$. In these situations we can use the Multistage sampling algorithm.
+
+The Ulam version of the Distances sampling algorithm is the most expensive from a computational perspective. We have stated that \pkg{PerMallows} is capable of generating auxiliary files for accelerating part of the computation. These files can be useful for the Distances sampling process. 
+
+\subsubsection{Multistage sampling algorithm}%%%%--------------------------------	MULTISTAGE	-------------------------------------------------------------
+The Multistage sampling algorithm generates samples from the MM and GMM under the Kendall's-$\tau$, Cayley and Hamming metrics. It is based on randomly generating a decomposition vector (see Section~\ref{sec:permus}) from the MM or GMM
+
+This algorithm divides the sampling process into three stages, namely:
+\begin{enumerate}
+ \item Randomly generate a distance decomposition vector. For the Kendall's-$\tau$ and Cayley distances this vector is sampled using the probability of each of the terms of the decomposition vector \citep{gMallows}, \citep{Irurozki2014b}. For the Hamming distance, the decomposition vector is generated considering the marginal probabilities as shown in~\cite{Irurozki2014a}, where this algorithm is known as the Chain sampling algorithm.
+ \item Generate a permutation uniformly at random $\pi$ consistent with the given distance decomposition vector.
+ \item In case $\sigma_0= e$, then $\pi$ is output. Otherwise, we get the final permutation by composing $\pi$ with $\sigma_0$, obtaining $\sigma=\pi\sigma_0$ since $\pi = \sigma_0\sigma_0^{-1}$.
+\end{enumerate}
+
+
+The complexity of step 1 is $O(n)$ for the Kendall's-$\tau$ and Cayley and $O(n^2)$ for Hamming. The complexity of step 2 is detailed in Section~\ref{sec:permus}. This method is not as fast as the Distances; however, it can generate permutations from both MM and GMM and it can efficiently handle distributions on permutations of large $n$. 
+
+\subsubsection{Gibbs sampling algorithm}%%%%--------------------------------	GIBBS	-------------------------------------------------------------
+The Gibbs sampler is a Markov Chain Monte Carlo algorithm based on sampling a Markov chain whose stationary distribution is the distribution of interest. Therefore, we have adapted this algorithm to generate samples from approximate distributions of both MM and WMM. 
+
+The Gibbs sampler generates permutations by moving from one solution to another. From a particular permutation, it is possible to move to any other permutation if  and only if it is in its neighborhood. We have considered the following neighborhoods. Under the Kendall's-$\tau$ distance, the neighborhood of a permutation is the set of permutations that result from randomly selecting a position $1\leq i < n$ and swapping $\sigma(i)$ and $\sigma(i+1)$. On the other hand, under the Cayley and Hamming distances, the neighborhood of a permutation is the set of permutations that result of randomly selecting two positions $1\leq i< j\leq n$ and swapping $\sigma(i)$ and $\sigma(j)$. Finally, under the Ulam distance, the neighborhood consists of the set of permutations that result from deleting an item from its position and inserting it in any other position, shifting other items between them. 
+
+The Gibbs algorithm proceeds as follows: 
+\begin{enumerate}
+ \item Generate uniformly at random  a permutation $\sigma$. 
+ \item Select uniformly at random a permutation $\sigma'$ in the neighborhood of $\sigma$.
+ \item Let $\gamma = min\{1,p(\sigma') / p(\sigma)\}$. With probability   $\gamma$ the algorithm accepts the candidate permutation moving the chain to the candidate permutation, $\sigma=\sigma'$, and goes back to step 2. Otherwise, it discards $\sigma'$ and goes back to step 2. 
+\end{enumerate}
+
+The initial samples are discarded (burn-in period) until the  Markov chain  approaches its stationary distribution and so samples from the chain are samples from the distribution of interest. Then, the above process is repeated until the algorithm generates a given number of permutations. Recall that so far we have assumed that the central permutation is the identity, $e=[123\ldots n]$. If not, we can center the sample around $\sigma_0$ by composing each of the permutations $\sigma$ in the sample with $\sigma_0$.
+
+The Gibbs algorithm is the fastest of the three algorithms considered. However, we should emphasize the fact that this an approximate sampling algorithm.
+
+\subsection{Learning}%%%%--------------------------------		LEARNING	-------------------------------------------------------------
+\label{sec:learning}
+In this section we deal with the maximum likelihood estimation of the parameters of the distribution given a sample of $m$ i.i.d. permutations \{$\sigma_1$, $\sigma_2$, \ldots , $\sigma_m$\} which is given by the following equation. 
+ 
+\[ Ln \;  {\cal L} ( \{\sigma_1, \sigma_2 , \ldots , \sigma_m\}  | \sigma_0, \boldsymbol \theta) = 
+ \sum_{s=1}^{m} Ln \;p(\sigma_s | \sigma_0, \boldsymbol \theta) \]
+
+
+The maximum likelihood parameters are different for MM and GMM. Moreover, their expression differs regarding the distance on the permutations considered. In this way, we will describe the maximum likelihood estimation for each model and distance separately. Finally, we will introduce the algorithms provided in \pkg{PerMallows} to fit the parameters of a given sample. 
+
+\subsubsection{Mallows model}%%%%--------------------------------	LEARNING MM	-------------------------------------------------------------
+\label{sec:learning_mm}
+For the MM, the maximum likelihood estimation of the parameters can be carried out in two stages. The first one deals with the MLE for the central permutation, $\hat \sigma_0$, and then the MLE for the dispersion parameters for the given $\hat \sigma_0$ can be obtained. 
+
+Problems consisting of finding the permutation that minimizes the sum of the distances to at least three given permutations are called median problems. The median problem for the Kendall's-$\tau$ distance is also known as Kemeny rank aggregation problem and it is known to be NP-hard \citep{Bartholdi1989}. The median problem for the Hamming distance is equivalent to the Linear Assignment Problem (LAP), for which a polynomial algorithm is known. Though the complexity of the median problems under the Cayley and Ulam distances has not been yet established, they are supposed to be NP-complete \citep{Popov2007}. 
+
+Once the MLE for $\sigma_0$ has been found, the process continues by estimating the MLE for the dispersion parameter $\theta$, which will also differ for each distance. When the metric is the Kendall's-$\tau$, the MLE for the dispersion parameter, $\hat \theta$, is the $\theta$ that satisfies the following expression:
+
+\begin{equation}
+  \frac{n-1 }{exp(\theta)-1} - \bar d -  \sum_{k=2}^{n} \frac{k\,exp(-\theta k)}{1-exp(-\theta k)} = 0	
+\label{eq:theta_mm_kendall}
+\end{equation}
+
+where $\bar d=\sum_{i=0}^m d_k(\sigma_i  \hat \sigma_0^{-1})/m$. For the Cayley, Hamming and Ulam distances, the expression for the dispersion parameters can be found in \cite{Irurozki2014b}, \cite{Irurozki2014a} and \cite{Irurozki2014} respectively. Although there is no closed-form expression for the MLE for $\theta$ of any of them, the solution to these equations can be easily calculated with numerical methods such as Newton-Raphson. We have included in \pkg{PerMallows} both unidimensional and multidimensional Newton-Raphson from \cite{numerical_recipes_c}.
+
+\subsubsection{Generalized Mallows model}%%%%--------------------------------	LEARNING GMM	-------------------------------------------------------------
+For the GMM, the exact maximum likelihood estimation of the parameters can not be carried out in two stages and, thus, every parameter must be simultaneously estimated. The expression of the MLE for the parameters of a GMM under the Kendall's-$\tau$, Cayley and Hamming distances can be found in \cite{Mandhani2009}, \cite{Irurozki2014b} and \cite{Irurozki2014a} respectively. 
+
+
+\subsubsection{Learning algorithms under each distance}%%%%--------------------------------	LEARNING ALGORITHMS	-------------------------------------------------------------
+In this section we briefly describe the learning algorithms implemented in \pkg{PerMallows} for learning MM and GMM. Since the exact estimation of the parameters as described in the previous lines can be computationally intractable under certain conditions, approximate algorithms are also included for most of the cases. 
+
+\paragraph{Kendall's-$\tau$}
+For the Kendall's-$\tau$ distance, \pkg{PerMallows} includes the approximate estimation of MM and GMM. Both estimation processes are carried out by, first, approximating the MLE for the consensus permutation $\hat \sigma_0$, and then obtaining $\hat \theta$ for the given $\hat\sigma_0$. The main difficulty is founded on the estimation of the consensus permutation. 
+
+The approximate estimation of the central permutations $\sigma_0$ is carried out with the Borda algorithm \citep{Borda1781}. Borda is a heuristic algorithm that offers a very good trade-off between accuracy and time \citep{Ali2011}. Borda builds a central ranking $\hat \sigma_0$ by, first, calculating the average at each position $i$ of the permutations $\sigma_s$ $1\leq s \leq m$ in the sample, $\bar \sigma(i) = \sum_{s=0}^m \sigma_s(i)$, and secondly, sorting the items in $\hat \sigma_0$ according to $\bar \sigma(i)$. It is a fast algorithm, as it obtains a solution in time $O(nm)$. For the MM, this algorithm is asymptotically optimal as shown in \cite{gMallows}. 
+
+The expression for the MLE for the dispersion parameters given a central permutation are given in Equation~\eqref{eq:theta_mm_kendall} for the MM and in \cite{Mandhani2009} for the GMM. 
+
+The interested reader can find in \cite{Ali2011} the description and performance analysis of several exact and approximate algorithms for the MLE for the consensus permutation under the MM. The problem of the exact MLE for the parameters of a GMM is addressed in  \cite{Mandhani2009}. 
+
+\paragraph{Cayley}
+\pkg{PerMallows} includes exact and heuristic algorithms for the MLE for the parameters of both MM and GMM. 
+
+The exact algorithms search the space of partial  permutations of $k$ out of $n$ items using a branch and bound strategy. Note that the exact algorithm for the MM looks for the permutation that minimizes the sum of the distances to the permutations in the sample while the algorithm for the MLE for the parameters of the GMM looks for the permutation that maximizes the likelihood. These exact algorithms are capable of evaluating the first $k$ positions of the permutation and also giving a lower bound in the evaluation of the rest of the permutation. These two features combined are used for bounding the search space and give rise to an efficient algorithm when there is some consensus in the sample. 
+
+The approximate algorithm for the MM and GMM is divided into two separate stages. The first one constructs an approximate MLE for the consensus permutation which will be used as an initial solution to the Variable Neighborhood Search (VNS) in the second stage. The VNS is a heuristic algorithm that searches the space of permutations improving the likelihood. It makes use of two separate neighborhood systems, namely the insert and the swap. The insert operator considers as neighbors all those permutations that result from inserting an item into another position. The swap operator considers as neighbors all those permutations that result from swapping two positions. The local search for both neighborhood systems selects at each iteration the best neighbor of the current one (or selects a solution uniformly at random among those with the best evaluation in case of ties). We refer the interested reader to \cite{Irurozki2014b} for further details. 
+
+\paragraph{Hamming}
+\pkg{PerMallows} includes an exact algorithm for the MLE for the parameters of MM and an approximate algorithm for the MLE for the parameters of a GMM. 
+
+As we have already stated, the process of calculating the MLE for the central permutation in the MM is equivalent to the Linear Assignment Problem (LAP) and can be solved in polynomial time. Therefore, the exact estimation of the central permutation is carried out by \pkg{PerMallows} with a version of the Hungarian algorithm for the resolution of the LAP. Since the exact estimation of the central ranking is computationally cheap, an approximate algorithm is not needed. 
+
+The solution to the LAP problem, $\sigma_{LAP}$, on the GMM under the Hamming distance is a consistent estimator of the central permutation. Our proposed algorithm for the estimation of the parameters selects $\sigma_{LAP}$ as the central permutation and then computes the dispersion parameters by solving a system of equations with the multidimensional Newton-Raphson proposed in \cite{numerical_recipes_c}.
+
+Both the proof of consistency and experiments showing the performance of the proposed approximation can be found in \cite{Irurozki2014a}.
+
+\paragraph{Ulam}
+\pkg{PerMallows} supports the approximate learning of parameters of the MM. 
+
+The approximate consensus given a collection of permutations is set to be the set-median permutation. The set-median permutation is the permutation in the sample that minimizes the sum of the distances to the rest of the permutations in the sample. Note that this problem can be solved in polynomial time. 
+
+The expression of the MLE for the dispersion parameter given the consensus permutation and further details are given in  \cite{Irurozki2014}.
+Recall that for the Ulam distance it is possible to generate auxiliary files with the count of the permutations at each distance. They can be helpful also in this learning process, in particular for the estimation of the dispersion parameters.
+
+
+\subsection{Summary}
+\pkg{PerMallows} provides functions for dealing with the Mallows and generalized Mallows models as well as a complete toolbox for working with permutations. These probability models need the definition of a metric for permutations and \pkg{PerMallows} considers four different distances: Kendall's-$\tau$, Cayley, Hamming and Ulam. The \pkg{PerMallows} package provides three different sampling algorithms and two learning algorithms. However, not every algorithm can be applied to the models under every metric. We include in Table~\ref{tab:restrictions} a summary of the applicability of the algorithms for each metric. 
+
+
+ \begin{table}[h]
+\begin{tabular}{lllcccc}
+\multicolumn{3}{l}{}                     & \multicolumn{1}{l}{Kendall} & \multicolumn{1}{l}{Cayley} & \multicolumn{1}{l}{Hamming} & \multicolumn{1}{l}{Ulam} \\
+\hline\hline
+\multirow{5}{*}{MM}  
+& \multirow{3}{*}{Sampling} 
+						& Distances   	& $\checkmark$              	& $\checkmark$               & $\checkmark$                	& $\checkmark$             \\
+                     &                           	& Multistage  	& $\checkmark$                	& $\checkmark$               & $\checkmark$                	&          $\times$                \\
+                     &                           	& Gibbs       	& $\checkmark$                	& $\checkmark$               & $\checkmark$                	&          $\times$     \\
+\cline{2-7}
+& \multirow{2}{*}{Learning} 	& Exact       	&$\times$                 		& $\checkmark$               & $\checkmark$                	&$\times$                \\
+                     &                           	& Approximate & $\checkmark$                	& $\checkmark$               & $\times$                  		& $\checkmark$             \\
+\hline\hline
+\multirow{5}{*}{GMM} & \multirow{3}{*}{Sampling} 
+						& Distances   	&$\times$                 		&$\times$                  		&$\times$                   		&$\times$               \\
+                     &                           	& Multistage  	& $\checkmark$                	& $\checkmark$               & $\checkmark$                	&$\times$           \\
+                     &                           	& Gibbs       	& $\checkmark$                	& $\checkmark$               & $\checkmark$                	&$\times$           \\
+                      \cline{2-7}
+                      & \multirow{2}{*}{Learning} 
+                      				& Exact      	&$\times$                   		& $\checkmark$               & $\checkmark$                	&$\times$            \\
+                     &                           	& Approximate & $\checkmark$                	& $\checkmark$               & $\times$                	&$\times$          \\
+\hline \hline
+\end{tabular}
+\caption{Applicability restrictions of the algorithms for each of the supported models}
+\label{tab:restrictions}
+\end{table}
+
+
+
+\section{The PerMallows package}
+\label{sec:usage}
+
+%------------------		manual 
+
+
+
+
+In this section we show how to use the \pkg{PerMallows} package. \pkg{PerMallows} includes functions to generate permutations, as well as the most common operators and distance related functions. The metrics considered are Kendall's-$\tau$, Cayley, Hamming and Ulam. Moreover, \pkg{PerMallows} implements the algorithms for probability distributions introduced in \cite{Irurozki2014,Irurozki2014a,Irurozki2014b}. The probability models considered are Mallows (MM) and Generalized Mallows (GMM).
+
+The number of items in the permutations, $n$, is denoted \code{perm.length} in \pkg{PerMallows}.
+
+\subsection{Permutations}
+\paragraph{Generation}
+The most basic function consists of generating permutations. The permutations are coded as vectors of the first $n$ natural numbers where each item appears once and once only. They can be defined by hand as follows:
+\begin{Schunk}
+\begin{Sinput}
+> sigma <- c(1, 5, 6, 4, 2, 3)
+> sigma
+\end{Sinput}
+\begin{Soutput}
+[1] 1 5 6 4 2 3
+\end{Soutput}
+\end{Schunk}
+%pi <- c(3,5,1,2,6,4)pi
+
+The validity of a vector as a permutation can be checked with the function \code{is.permutation}.
+\begin{Schunk}
+\begin{Sinput}
+> is.permutation(perm = sigma)
+\end{Sinput}
+\begin{Soutput}
+[1] TRUE
+\end{Soutput}
+\begin{Sinput}
+> is.permutation(c(0, 1, 5, 4, 2, 3))
+\end{Sinput}
+\begin{Soutput}
+[1] FALSE
+\end{Soutput}
+\begin{Sinput}
+> is.permutation(c(1, 8, 9, 2, 5, 3))
+\end{Sinput}
+\begin{Soutput}
+[1] FALSE
+\end{Soutput}
+\end{Schunk}
+
+The identity permutation is that which maps every item $i$ to position $i$. It can be created with the \code{identity.permutation} function.
+\begin{Schunk}
+\begin{Sinput}
+> identity.permutation(perm.length = 6)
+\end{Sinput}
+\begin{Soutput}
+[1] 1 2 3 4 5 6
+\end{Soutput}
+\end{Schunk}
+The generation of a permutation uniformly at random is supported via the \code{runif.permutation} function. 
+\begin{Schunk}
+\begin{Sinput}
+> runif.permutation(n = 2, perm.length = 6)
+\end{Sinput}
+\begin{Soutput}
+     [,1] [,2] [,3] [,4] [,5] [,6]
+[1,]    6    2    4    1    3    5
+[2,]    1    5    6    3    4    2
+\end{Soutput}
+\end{Schunk}
+
+
+The generation of the set of every possible permutation of $n$ items is carried out with the \code{permutations.of} function. Recall that the number of permutations of $n$ items increases factorially with $n$ and it is thus computationally expensive to generate every permutation of $n \ge 10$. By default, the \code{alert} argument is set to true. When \code{alert} is \code{TRUE} and $n$ is greater than 9, an alert message is shown. 
+\begin{Schunk}
+\begin{Sinput}
+> permutations.of(perm.length = 3, alert = FALSE)
+\end{Sinput}
+\begin{Soutput}
+     [,1] [,2] [,3]
+[1,]    1    2    3
+[2,]    1    3    2
+[3,]    2    1    3
+[4,]    2    3    1
+[5,]    3    1    2
+[6,]    3    2    1
+\end{Soutput}
+\begin{Sinput}
+> permutations.of(perm.length = 10)
+\end{Sinput}
+\begin{Soutput}
+Do you really want to generate all  3628800  permutations? (Y/N)
+[1] "Process cancelled"
+\end{Soutput}
+\end{Schunk}
+
+The collection of permutations generated is stored as a 2-dimensional matrix. It is also possible to read such a matrix from disk using the function \code{read.permutation.file}, which also checks if every row is a valid permutation. 
+\begin{Schunk}
+\begin{Sinput}
+> path = system.file("test.txt", package = "PerMallows")
+> sample = read.permutation.file(path)
+\end{Sinput}
+\end{Schunk}
+
+Together with the \pkg{PerMallows} package we provide some small datasets that will be used as running examples throughout this reference manual. 
+\begin{Schunk}
+\begin{Sinput}
+> data("data.1")
+> data.1
+\end{Sinput}
+\begin{Soutput}
+     V1 V2 V3 V4
+[1,]  1  3  2  4
+[2,]  2  1  3  4
+[3,]  1  4  3  2
+[4,]  1  2  4  3
+[5,]  2  3  4  1
+\end{Soutput}
+\end{Schunk}
+
+Another way of generating permutations is by ranking the ratings of a set of items. Suppose we have the results of five students in three different tests. An example of such a file is given in 'data.order'. After reading the file, we can get the ranks of each student with the system function \code{order.ratings}.
+
+\begin{Schunk}
+\begin{Sinput}
+> data("data.order")
+> data.order
+\end{Sinput}
+\begin{Soutput}
+   V1   V2  V3  V4   V5
+1 0.1 4.20 2.0 9.4 9.00
+2 6.3 2.11 0.1 5.7 4.00
+3 9.0 4.50 7.1 6.3 0.21
+\end{Soutput}
+\begin{Sinput}
+> order.ratings(ratings = data.order)
+\end{Sinput}
+\begin{Soutput}
+     [,1] [,2] [,3] [,4] [,5]
+[1,]    1    3    2    5    4
+[2,]    3    2    5    4    1
+[3,]    5    2    4    3    1
+\end{Soutput}
+\end{Schunk}
+
+\paragraph{Operations} 
+Two permutations can be composed and the result is a permutation. 
+\begin{Schunk}
+\begin{Sinput}
+> sigma <- c(1, 5, 6, 4, 2, 3)
+> pi <- c(3, 5, 1, 2, 6, 4)
+> compose(perm1 = sigma, perm2 = pi)
+\end{Sinput}
+\begin{Soutput}
+[1] 6 2 1 5 3 4
+\end{Soutput}
+\end{Schunk}
+
+Be aware that the composition is not commutative. 
+\begin{Schunk}
+\begin{Sinput}
+> compose(perm1 = sigma, perm2 = pi)
+\end{Sinput}
+\begin{Soutput}
+[1] 6 2 1 5 3 4
+\end{Soutput}
+\begin{Sinput}
+> compose(perm1 = pi, perm2 = sigma)
+\end{Sinput}
+\begin{Soutput}
+[1] 3 6 4 2 5 1
+\end{Soutput}
+\end{Schunk}
+
+Our implementation of the composition allows one of the arguments to be a collection of permutations. In this case, every permutation in the sample is composed with the permutation in the other argument, resulting in a new collection of permutations. 
+\begin{Schunk}
+\begin{Sinput}
+> tau <- c(2, 1, 3, 4)
+> compose(perm1 = data.1, perm2 = tau)
+\end{Sinput}
+\begin{Soutput}
+     V2 V1 V3 V4
+[1,]  3  1  2  4
+[2,]  1  2  3  4
+[3,]  4  1  3  2
+[4,]  2  1  4  3
+[5,]  3  2  4  1
+\end{Soutput}
+\end{Schunk}
+
+A useful summary of a sample is given by the number of permutations in the sample in which item $i$ appears at position $j$. This is usually denoted as the frequency matrix or first order marginal matrix. The current package supports it via the \code{frequency.mat} function. The parameter \code{perm} can be either a sample of permutations or a single permutation. The frequency matrix of a single permutation is usually denoted permutation matrix. We will illustrate the \code{frequency.mat} function using the well known APA dataset. 
+ 
+The American Psychological Association (APA) dataset includes 15449 ballots of the election for the president in 1980. 
+Each voter ranked at least one of the five candidates. Along with this package we distribute the 5738 ballots that ranked the five candidates by the name of \code{data.apa}. This dataset has been largely used in the literature. In particular, one can find in \cite{diaconis1989} a spectral analysis that takes into account the first order marginal of the dataset which can be computed as follows:
+\begin{Schunk}
+\begin{Sinput}
+> data("data.apa")
+> frequency.mat(perm = data.apa)
+\end{Sinput}
+\begin{Soutput}
+          [,1]      [,2]      [,3]      [,4]      [,5]
+[1,] 0.1835134 0.2647264 0.2288254 0.1746253 0.1483095
+[2,] 0.1350645 0.1876961 0.2466016 0.2467759 0.1838620
+[3,] 0.2804113 0.1673057 0.1382015 0.1829906 0.2310910
+[4,] 0.2042524 0.1693970 0.1897874 0.2028581 0.2337051
+[5,] 0.1967585 0.2108749 0.1965842 0.1927501 0.2030324
+\end{Soutput}
+\end{Schunk}
+
+Another basic operation for permutations is inversion. The inverse of a permutation can be obtained using the function \code{inverse.permutation}.
+\begin{Schunk}
+\begin{Sinput}
+> inverse.permutation(perm = sigma)
+\end{Sinput}
+\begin{Soutput}
+[1] 1 5 6 4 2 3
+\end{Soutput}
+\end{Schunk}
+
+The argument \code{perm}  can be a single permutation or a collection of permutations. It is worth noting that the inverse of the inverse of any permutation is itself.
+\begin{Schunk}
+\begin{Sinput}
+> inverse.permutation(inverse.permutation(c(1, 4, 5, 3, 2)))
+\end{Sinput}
+\begin{Soutput}
+[1] 1 4 5 3 2
+\end{Soutput}
+\end{Schunk}
+
+The present package also includes operators for the manipulation of permutations. The \code{swap} function, for example, swaps two prescribed items. 
+\begin{Schunk}
+\begin{Sinput}
+> swap(perm = identity.permutation(6), i = 1, j = 3)
+\end{Sinput}
+\begin{Soutput}
+[1] 3 2 1 4 5 6
+\end{Soutput}
+\end{Schunk}
+
+The \code{insert.at} function takes an item from position $i$ and inserts it after position $j$. 
+\begin{Schunk}
+\begin{Sinput}
+> insert.at(perm = identity.permutation(6), i = 5, j = 2)
+\end{Sinput}
+\begin{Soutput}
+[1] 1 2 5 3 4 6
+\end{Soutput}
+\end{Schunk}
+
+An inversion at position $1 \leq i < n$ occurs when the items at positions $i$ and $i+1$ are swapped. 
+\begin{Schunk}
+\begin{Sinput}
+> inversion.at(perm = identity.permutation(6), 1)
+\end{Sinput}
+\begin{Soutput}
+[1] 2 1 3 4 5 6
+\end{Soutput}
+\end{Schunk}
+
+\paragraph{Distances}
+We will now show how to deal with functions related with the distances between permutations included in this package. These functions include the argument \code{dist.name} which, unless otherwise stated, is one of the following: \code{kendall}, \code{cayley}, \code{hamming} or \code{ulam}. Moreover, its default value is \code{kendall}.
+
+The following computes the distance between \code{perm1} and \code{perm2} for a given metric. 
+\begin{Schunk}
+\begin{Sinput}
+> pi
+\end{Sinput}
+\begin{Soutput}
+[1] 3 5 1 2 6 4
+\end{Soutput}
+\begin{Sinput}
+> sigma
+\end{Sinput}
+\begin{Soutput}
+[1] 1 5 6 4 2 3
+\end{Soutput}
+\begin{Sinput}
+> distance(perm1 = sigma, perm2 = pi, dist.name = "cayley")
+\end{Sinput}
+\begin{Soutput}
+[1] 4
+\end{Soutput}
+\end{Schunk}
+
+The arguments \code{perm2} and \code{dist.name} can be omitted. In that case, \code{perm2} is assumed to be the identity, that means that the following code computes the Kendall's-$\tau$ distance between \code{pi} and $e$.
+\begin{Schunk}
+\begin{Sinput}
+> distance(perm1 = pi)
+\end{Sinput}
+\begin{Soutput}
+[1] 6
+\end{Soutput}
+\end{Schunk}
+
+As we have stated, the distance from a permutation to the identity can be decomposed in a vector. Clearly, this decomposition is different regarding the metric in question. In particular, the decomposition of the Kendall's-$\tau$ distance is a vector of $n$$-1$ integer terms, while for the Cayley distance it is a binary vector of $n$$-1$ terms and for the Hamming distance it is a binary vector of $n$ terms. These decompositions are computed by the following function:
+\begin{Schunk}
+\begin{Sinput}
+> sigma
+\end{Sinput}
+\begin{Soutput}
+[1] 1 5 6 4 2 3
+\end{Soutput}
+\begin{Sinput}
+> v.vector <- permutation2decomposition(perm = sigma, dist.name = "kendall")
+> v.vector
+\end{Sinput}
+\begin{Soutput}
+[1] 0 3 3 2 0
+\end{Soutput}
+\begin{Sinput}
+> x.vector <- permutation2decomposition(perm = sigma, dist.name = "cayley")
+> x.vector
+\end{Sinput}
+\begin{Soutput}
+[1] 0 1 1 0 0
+\end{Soutput}
+\begin{Sinput}
+> h.vector <- permutation2decomposition(perm = sigma, dist.name = "hamming")
+> h.vector
+\end{Sinput}
+\begin{Soutput}
+[1] 0 1 1 0 1 1
+\end{Soutput}
+\end{Schunk}
+
+Given that there are possibly many longest increasing subsequences in a permutation, there is no decomposition of the Ulam distance. The possible values for the \code{dist.name} are therefore, \code{kendall}, \code{cayley} and \code{hamming} and being the default value \code{kendall}. 
+
+The \pkg{PerMallows} package can also perform the inverse operation, that is, given a decomposition vector and a metric, obtain a permutation consistent with the vector. Recall that for Cayley and Hamming there are possibly many permutations with a particular decomposition. In these situations, the following function recovers uniformly at random one of the permutations consistent with the decomposition vector.
+\begin{Schunk}
+\begin{Sinput}
+> decomposition2permutation(vec = v.vector, dist.name = "kendall")
+\end{Sinput}
+\begin{Soutput}
+[1] 1 5 6 4 2 3
+\end{Soutput}
+\begin{Sinput}
+> decomposition2permutation(vec = x.vector, dist.name = "cayley")
+\end{Sinput}
+\begin{Soutput}
+[1] 1 6 2 4 5 3
+\end{Soutput}
+\begin{Sinput}
+> decomposition2permutation(vec = h.vector, dist.name = "hamming")
+\end{Sinput}
+\begin{Soutput}
+[1] 1 3 2 4 6 5
+\end{Soutput}
+\end{Schunk}
+
+The \pkg{PerMallows} package implements a function to obtain the list of the cycles in which the permutation decomposes. 
+\begin{Schunk}
+\begin{Sinput}
+> cycles = permutation2cycles(perm = sigma)
+\end{Sinput}
+\end{Schunk}
+
+The \code{str.cycle} function can be used in order to friendly display the cycles .
+\begin{Schunk}
+\begin{Sinput}
+> str.cycle(cycles)
+\end{Sinput}
+\begin{Soutput}
+(1)(5 2)(6 3)(4)
+\end{Soutput}
+\end{Schunk}
+
+Also, the inverse operation consisting of building a permutation given the list of cycles is supported. 
+\begin{Schunk}
+\begin{Sinput}
+> cycles2permutation(cycles = cycles)
+\end{Sinput}
+\begin{Soutput}
+[1] 1 5 6 4 2 3
+\end{Soutput}
+\end{Schunk}
+
+\pkg{PerMallows} includes a function to count the number of permutations of $n$ items at distance \code{dist.value} for a given distance.
+\begin{Schunk}
+\begin{Sinput}
+> count.perms.distance(perm.length = 6, dist.value = 2, dist.name = "ulam")
+\end{Sinput}
+\begin{Soutput}
+[1] 181
+\end{Soutput}
+\end{Schunk}
+
+The most computationally expensive version of any function is usually that concerning the Ulam distance. In the case where one expects to work repeatedly with a model under the Ulam distance of a particular \code{perm.length} number of items (being \code{perm.length} large, say \code{perm.length}$>50$), it is a good idea to generate auxiliary files including the count of permutations at each distance and later operating with those files. The operations that can be accelerated are counting and generating random permutations, learning and sampling. The files are generated with the following function:
+
+\begin{Schunk}
+\begin{Sinput}
+> generate.aux.files(perm.length = 6)
+\end{Sinput}
+\begin{Soutput}
+[[1]]
+[1] 6
+\end{Soutput}
+\end{Schunk}
+
+The fastest version of the function to count the number of permutations at a given Ulam distance is the same as the one above but the optional parameter \code{disk} is set to \code{TRUE}. In this version, the data is read from the files instead of computing it.  
+
+\begin{Schunk}
+\begin{Sinput}
+> count.perms.distance(perm.length = 6, dist.value = 4, dist.name = "ulam", 
++     disk = TRUE)
+\end{Sinput}
+\begin{Soutput}
+[1] 131
+\end{Soutput}
+\end{Schunk}
+
+Ragarding the process of counting permutations under the Cayley distance, we also include a function to count the number of permutations with $n$ items and \code{num.cycles} cycles. 
+\begin{Schunk}
+\begin{Sinput}
+> count.perms.cycles(perm.length = 6, num.cycles = 4)
+\end{Sinput}
+\begin{Soutput}
+[1] 85
+\end{Soutput}
+\end{Schunk}
+
+The following functions are related to the Hamming distance. Recall that an unfixed point is  a position of the permutation $\sigma$ such that $\sigma(i) \neq i$, while a fixed point is a position such that  $\sigma(i) =i$. A derangement is a permutation with no fixed point. \pkg{PerMallows} includes functions to count the number of permutations of $n$ items with exactly \code{fixed} fixed points, to count the number of permutations with at least \code{unfixed} unfixed points and to count the number of permutations with no fixed points. 
+\begin{Schunk}
+\begin{Sinput}
+> count.perms.fixed.points(perm.length = 6, fixed = 4)
+\end{Sinput}
+\begin{Soutput}
+[1] 15
+\end{Soutput}
+\begin{Sinput}
+> count.perms.unfixed.points.gtet(perm.length = 6, unfixed = 2)
+\end{Sinput}
+\begin{Soutput}
+[1] 504
+\end{Soutput}
+\begin{Sinput}
+> count.derangements(perm.length = 6)
+\end{Sinput}
+\begin{Soutput}
+[1] 265
+\end{Soutput}
+\end{Schunk}
+
+The generation of random permutations at a prescribed distance is supported by the \code{r.dist.d} function, which generates \code{n} permutations of $n$ items at distance \code{dist.value} for a particular metric.
+\begin{Schunk}
+\begin{Sinput}
+> r.dist.d(n = 4, perm.length = 5, dist.value = 3, dist.name = "ulam")
+\end{Sinput}
+\begin{Soutput}
+     [,1] [,2] [,3] [,4] [,5]
+[1,]    3    2    1    5    4
+[2,]    5    4    2    1    3
+[3,]    5    3    2    4    1
+[4,]    3    5    2    4    1
+\end{Soutput}
+\end{Schunk}
+
+Regarding the Cayley distance, the \code{r.perms.cycles} function generates uniformly at random permutations of $n$ items with \code{cycles} cycles. 
+\begin{Schunk}
+\begin{Sinput}
+> r.perms.cycles(n = 3, perm.length = 6, cycles = 5)
+\end{Sinput}
+\begin{Soutput}
+     [,1] [,2] [,3] [,4] [,5] [,6]
+[1,]    6    2    3    4    5    1
+[2,]    5    2    3    4    1    6
+[3,]    1    4    3    2    5    6
+\end{Soutput}
+\end{Schunk}
+
+Similarly, \code{r.derangement} generates \code{n} permutations with no fixed point. 
+\begin{Schunk}
+\begin{Sinput}
+> r.derangement(n = 5, perm.length = 6)
+\end{Sinput}
+\begin{Soutput}
+     [,1] [,2] [,3] [,4] [,5] [,6]
+[1,]    2    5    4    6    1    3
+[2,]    4    1    5    3    6    2
+[3,]    2    4    6    5    3    1
+[4,]    6    4    2    5    3    1
+[5,]    2    3    6    1    4    5
+\end{Soutput}
+\end{Schunk}
+\subsection{Distributions on permutations}
+In this section we show how to deal with the Mallows and Generalized Mallows models. We show functions for inference, learning and sampling both models.
+
+Bear in mind that Mallows model (MM) can be used with every metric for permutation considered in this paper, Cayley, Kendall's-$\tau$, Hamming and Ulam. On the other hand, the Generalized Mallows model (GMM) can only be used with Cayley, Kendall's-$\tau$ and Hamming\footnote{Although strictly speaking the GMM can not be used with the Hamming distance, we denote the similar Weighted Hamming Mallows model as GMM for the sake of clarity.}. Remember that for distributions on permutations on \code{perm.length} items the dispersion parameter vector $\boldsymbol \theta$ has \code{perm.length}-1 terms when the distance name is either Cayley or Kendall's-$\tau$, and \code{perm.length} when the distance is Hamming.
+
+\paragraph{Parameter fitting}
+The estimation of the parameters of the MM and GMM is done with separate functions, \code{lmm} and \code{lgmm} respectively. Both need as arguments the sample to fit. The metric to use, an initial guess for the consensus permutation and the estimation methods are optional methods. The latter argument can be \code{approx} (by default) for the approximate learning and \code{exact} for the exhaustive one. 
+\begin{Schunk}
+\begin{Sinput}
+> data("data.3")
+> my.mm <- lmm(sample = data.3, sigma_0_ini = identity.permutation(6), 
++     dist.name = "cayley", estimation = "exact")
+> my.gmm <- lgmm(sample = data.3, sigma_0_ini = c(2, 1, 6, 5, 3, 
++     4), dist.name = "cayley", estimation = "approx")
+> my.mm
+\end{Sinput}
+\begin{Soutput}
+$mode
+[1] 1 2 3 4 5 6
+
+$theta
+[1] 0.8364089
+\end{Soutput}
+\begin{Sinput}
+> my.gmm
+\end{Sinput}
+\begin{Soutput}
+$mode
+[1] 1 2 3 4 5 6
+
+$theta
+[1] 1.4087672 0.2876821 0.6931472 1.0986123 0.6190392
+\end{Soutput}
+\end{Schunk}
+
+If the auxiliary files have been generated with the function \code{generate.aux.files}, learning the parameters of the Ulam distance can be done by reading the files instead of computing the necessary data. 
+\begin{Schunk}
+\begin{Sinput}
+> lmm(sample = data.3, dist.name = "ulam", disk = TRUE)
+\end{Sinput}
+\begin{Soutput}
+$mode
+[1] 2 5 1 3 4 6
+
+$theta
+[1] 0.8900056
+\end{Soutput}
+\end{Schunk}
+
+\paragraph{Generating from the model}
+Although there are two separate functions for sampling MM and GMM (\code{rmm} and \code{rgmm}), they are used in a similar way. The required arguments for the MM (GMM) are the number of permutations to be generated, \code{n}, the parameters of the distribution, that is $\sigma_0$ and $\theta$ ($\boldsymbol\theta$), the name of the distance used and the sampling algorithm (\code{distances}, \code{multistage} or \code{gibbs}).
+\begin{Schunk}
+\begin{Sinput}
+> rmm(n = 5, sigma0 = my.mm$mode, theta = my.mm$theta, dist.name = "kendall", 
++     sampling.method = "distances")
+\end{Sinput}
+\begin{Soutput}
+     [,1] [,2] [,3] [,4] [,5] [,6]
+[1,]    3    1    4    2    5    6
+[2,]    1    2    3    5    6    4
+[3,]    2    4    1    6    5    3
+[4,]    1    2    3    4    5    6
+[5,]    1    2    4    3    5    6
+\end{Soutput}
+\begin{Sinput}
+> rgmm(n = 5, sigma0 = my.gmm$mode, theta = my.gmm$theta, dist.name = "kendall", 
++     sampling.method = "multistage")
+\end{Sinput}
+\begin{Soutput}
+     [,1] [,2] [,3] [,4] [,5] [,6]
+[1,]    1    6    4    2    3    5
+[2,]    1    5    3    2    4    6
+[3,]    1    4    2    3    6    5
+[4,]    1    2    3    4    5    6
+[5,]    1    5    2    3    4    6
+\end{Soutput}
+\end{Schunk}
+
+If the auxiliary files have been generated with the function \code{generate.aux.files}, the distances sampling for the Ulam distance can rely on them. Again, the \code{disk} parameter must be set to \code{TRUE}.
+
+\begin{Schunk}
+\begin{Sinput}
+> rmm(n = 3, sigma0 = identity.permutation(6), theta = 1, dist.name = "ulam", 
++     disk = TRUE)
+\end{Sinput}
+\begin{Soutput}
+     [,1] [,2] [,3] [,4] [,5] [,6]
+[1,]    3    6    4    2    5    1
+[2,]    1    5    2    4    3    6
+[3,]    2    3    4    6    1    5
+\end{Soutput}
+\end{Schunk}
+
+\paragraph{Probability}
+The probability of a permutation for a given MM (GMM) is calculated with the \code{dmm} (\code{dgmm}) function. The arguments of \code{dmm} (\code{dgmm}) are the permutation, the consensus permutation $\sigma_0$, dispersion parameter $\theta$ ($\boldsymbol \theta$) and the name of the distance used, which by default is Kendall's-$\tau$.
+\begin{Schunk}
+\begin{Sinput}
+> dmm(perm = my.mm$mode, sigma0 = my.mm$mode, theta = my.mm$theta, 
++     dist.name = "ulam")
+\end{Sinput}
+\begin{Soutput}
+[1] 0.01228094
+\end{Soutput}
+\begin{Sinput}
+> dmm(perm = sigma, sigma0 = my.mm$mode, theta = my.mm$theta, dist.name = "hamming")
+\end{Sinput}
+\begin{Soutput}
+[1] 0.00200106
+\end{Soutput}
+\begin{Sinput}
+> dgmm(perm = my.gmm$mode, sigma0 = my.gmm$mode, theta = my.gmm$theta, 
++     dist.name = "kendall")
+\end{Sinput}
+\begin{Soutput}
+[1] 0.05945101
+\end{Soutput}
+\begin{Sinput}
+> dgmm(perm = sigma, sigma0 = my.gmm$mode, theta = my.gmm$theta, 
++     dist.name = "kendall")
+\end{Sinput}
+\begin{Soutput}
+[1] 0.0003483458
+\end{Soutput}
+\end{Schunk}
+
+
+In this way, the previous functions can be used to calculate the log-likelihood of a sample of permutations as follows.
+\begin{Schunk}
+\begin{Sinput}
+> log.prob <- apply(data.3, MARGIN = 1, FUN = function(x) {
++     log(dmm(x, my.mm$mode, my.mm$theta, dist.name = "cayley"))
++ })
+> sum(log.prob)
+\end{Sinput}
+\begin{Soutput}
+[1] -123.8265
+\end{Soutput}
+\begin{Sinput}
+> log.prob <- apply(data.3, MARGIN = 1, FUN = function(x) {
++     log(dgmm(x, my.gmm$mode, my.gmm$theta, dist.name = "cayley"))
++ })
+> sum(log.prob)
+\end{Sinput}
+\begin{Soutput}
+[1] -122.1056
+\end{Soutput}
+\end{Schunk}
+
+\pkg{PerMallows} includes the computation of the marginal distribution for both MM and GMM under the Hamming distance. The set of fixed and unfixed points is represented in the distance decomposition vector, so $H_j(\sigma)=0$ means that $j$ is a fixed point,  $H_j(\sigma)=1$ that $j$ is an unfixed point and any other value of $H_j(\sigma)$ means that $j$ is unknown. The following computes the marginal distribution of those permutations having fixed points at positions 2 and 4 and unfixed points at position 1. 
+
+\begin{Schunk}
+\begin{Sinput}
+> marginal(h = c(1, 0, -1, 0, -1), theta = c(1.1, 2, 1, 0.2, 0.4))
+\end{Sinput}
+\begin{Soutput}
+[1] 0.0808545
+\end{Soutput}
+\end{Schunk}
+
+\pkg{PerMallows} includes functions to compute the expectation of the distance (resp. its decomposition vector) under the MM (resp.  GMM) under the Hamming distance. The former computes the expectation of the distance under an MM of a given dispersion parameter and number of items. The latter, computes the expectation of the distance decomposition vector given a multidimensional dispersion parameter. 
+\begin{Schunk}
+\begin{Sinput}
+> expectation.mm(theta = 3, perm.length = 9, "ulam")
+\end{Sinput}
+\begin{Soutput}
+[1] 1.812466
+\end{Soutput}
+\begin{Sinput}
+> expectation.gmm(c(1.1, 2, 1, 0.2, 0.4), "cayley")
+\end{Sinput}
+\begin{Soutput}
+[1] 0.6246747 0.3512144 0.5246331 0.6208475 0.4013123 0.0000000
+\end{Soutput}
+\end{Schunk}
+ 
+%------------------		manual 
+
+\section{Conclusions}
+\label{sec:conclusion}
+This paper describes the associated \proglang{R} package for dealing with probability distributions over permutations spaces, \pkg{PerMallows}. The models are the Mallows (MM) and Generalized Mallows (GMM) models. Both models require a distance for permutations. \pkg{PerMallows} considers the Kendall's-$\tau$, Cayley, Hamming and Ulam metrics. 
+
+The \pkg{PerMallows} package is aimed to be a compilation of resources for working on MM and GMM. It provides functions for the exact and approximate estimation of the parameters of a collections of permutations, for simulating from a given distribution or calculating the density function.
+
+Efficient algorithms for reasoning on permutation spaces can not be given with out taking into consideration the particular nature of permutations. Therefore, the core of the \pkg{PerMallows} package consists of several functions and operators for permutations such as the factorization of permutations, the random generation of permutations, counting the number of permutations at a given distance, etc.
+
+We expect the \pkg{PerMallows} package to be helpful to every kind of user, from the novice in the field of permutations and/or probability models for permutation spaces to the advanced users. Moreover, the internal code has been written in \proglang{C++} for the maximum efficiency. Also, the code is public for any researcher which wants to extend or improve it. 
+
+
+
+
+%\bibliographystyle{plain}
+%\bibliography{../../mendeley}
+\begin{thebibliography}{36}
+\newcommand{\enquote}[1]{``#1''}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\providecommand{\urlprefix}{URL }
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi:\discretionary{}{}{}#1}\else
+  \providecommand{\doi}{doi:\discretionary{}{}{}\begingroup
+  \urlstyle{rm}\Url}\fi
+\providecommand{\eprint}[2][]{\url{#2}}
+
+\bibitem[{Akl(1980)}]{akl02}
+Akl SG (1980).
+\newblock \enquote{{A New Algorithm for Generating Derangements}.}
+\newblock \emph{BIT Numerical Mathematics}, \textbf{20}(1), 2--7.
+
+\bibitem[{Ali and Meila(2012)}]{Ali2011}
+Ali A, Meila M (2012).
+\newblock \enquote{{Experiments with Kemeny ranking: What works when?}}
+\newblock \emph{Mathematical Social Sciences}, \textbf{64}(1), 28--40.
+\newblock ISSN 0165-4896.
+
+\bibitem[{Arndt(2010)}]{Arndt2010}
+Arndt J (2010).
+\newblock \emph{{Generating Random Permutations}}.
+\newblock Ph.D. thesis, Australian National University.
+
+\bibitem[{Arora and Meila(2013)}]{DBLP:conf/aistats/AroraM13}
+Arora R, Meila M (2013).
+\newblock \enquote{{Consensus Ranking with Signed Permutations}.}
+\newblock In \emph{AISTATS}, volume~31 of \emph{JMLR Proceedings}, pp.
+  117--125. JMLR.org.
+
+\bibitem[{Bader(2011)}]{Bader11}
+Bader M (2011).
+\newblock \enquote{{The transposition median problem is NP-complete.}}
+\newblock \emph{Theoretical Computer Science}, \textbf{412}(12-14), 1099--1110.
+
+\bibitem[{Bartholdi \emph{et~al.}(1989)Bartholdi, Tovey, and
+  Trick}]{Bartholdi1989}
+Bartholdi J, Tovey CA, Trick MA (1989).
+\newblock \enquote{{Voting schemes for which it can be difficult to tell who
+  won the election}.}
+\newblock \emph{Social Choice and Welfare}, \textbf{6}(2), 157--165.
+
+\bibitem[{Borda(1781)}]{Borda1781}
+Borda J (1781).
+\newblock \emph{{Memoire sur les Elections au Scrutin.}}
+\newblock Histoire de l'Academie Royal des Sciences.
+
+\bibitem[{Ceberio \emph{et~al.}(2011)Ceberio, Mendiburu, and
+  Lozano}]{cebe2011b}
+Ceberio J, Mendiburu A, Lozano JA (2011).
+\newblock \enquote{{Introducing The Mallows Model on Estimation of Distribution
+  Algorithms}.}
+\newblock In \emph{International Conference on Neural Information Processing
+  (ICONIP)}, 23-25. Shanghai.
+
+\bibitem[{Chen and Pu(2004)}]{Chen04}
+Chen L, Pu P (2004).
+\newblock \enquote{{Survey of Preference Elicitation Methods}.}
+
+\bibitem[{Cheng and H\"{u}llermeier(2009)}]{conf/isnn/ChengH09}
+Cheng W, H\"{u}llermeier E (2009).
+\newblock \enquote{{A New Instance-Based Label Ranking Approach Using the
+  Mallows Model}.}
+\newblock In W~Yu, H~He, N~Zhang (eds.), \emph{Advances in Neural Networks -
+  ISNN}, volume 5551 of \emph{Lecture Notes in Computer Science}, pp. 707--716.
+  Springer.
+
+\bibitem[{Cheng and Hullermeier(2009)}]{Cheng2009}
+Cheng W, Hullermeier E (2009).
+\newblock \enquote{{A Simple Instance-Based Approach to Multilabel
+  Classification Using the Mallows Model}.}
+\newblock In \emph{Workshop Proceedings of Learning from Multi-Label Data}, pp.
+  28--38. Bled, Slovenia.
+
+\bibitem[{Critchlow \emph{et~al.}(1991)Critchlow, Fligner, and
+  Verducci}]{critchlow91}
+Critchlow DE, Fligner MA, Verducci JS (1991).
+\newblock \enquote{{Probability Models on Rankings}.}
+\newblock \emph{Journal of Mathematical Psychology}, \textbf{35}, 294--318.
+
+\bibitem[{D'Elia and Piccolo(2005)}]{D'Elia2005917}
+D'Elia A, Piccolo D (2005).
+\newblock \enquote{{A mixture model for preferences data analysis}.}
+\newblock \emph{Computational Statistics \&amp; Data Analysis}, \textbf{49}(3),
+  917--934.
+
+\bibitem[{Diaconis(1988)}]{diaconis88}
+Diaconis P (1988).
+\newblock \emph{{Group representations in probability and statistics}}.
+\newblock Institute of Mathematical Statistics.
+
+\bibitem[{Diaconis(1989)}]{diaconis1989}
+Diaconis P (1989).
+\newblock \enquote{{A Generalization of Spectral Analysis with Application to
+  Ranked Data}.}
+\newblock \emph{The Annals of Statistics}, \textbf{17}(3), 949--979.
+
+\bibitem[{Farah and Vanderpooten(2007)}]{farah}
+Farah M, Vanderpooten D (2007).
+\newblock \enquote{{An outranking approach for rank aggregation in information
+  retrieval}.}
+\newblock In \emph{Conference on Research and development in information
+  retrieval (ACM SIGIR)}, SIGIR '07, pp. 591--598. ACM, New York, NY, USA.
+
+\bibitem[{F\'{e}ray(2013)}]{feray2012}
+F\'{e}ray V (2013).
+\newblock \enquote{{Asymptotics of some statistics in Ewens random
+  permutations}.}
+\newblock \emph{Electronic Journal of Probability}, \textbf{18}(76).
+
+\bibitem[{Fligner and Verducci(1986)}]{gMallows}
+Fligner MA, Verducci JS (1986).
+\newblock \enquote{{Distance based ranking models}.}
+\newblock \emph{Journal of the Royal Statistical Society}, \textbf{48}(3),
+  359--369.
+
+\bibitem[{Fligner and Verducci(1988)}]{Fligner1988}
+Fligner MA, Verducci JS (1988).
+\newblock \enquote{{Multistage Ranking Models}.}
+\newblock \emph{Journal of the American Statistical Association},
+  \textbf{83}(403), 892.
+
+\bibitem[{Furnkranz and Hullermeier(2013)}]{Preferences}
+Furnkranz J, Hullermeier E (2013).
+\newblock \enquote{{Preference Learning and Ranking [Special Issue]}.}
+\newblock \emph{Machine Learning}, \textbf{93}(2-3).
+
+\bibitem[{Gnedin and Olshanski(2012)}]{Gnedin2012615}
+Gnedin A, Olshanski G (2012).
+\newblock \enquote{{The two-sided infinite extension of the Mallows model for
+  random permutations}.}
+\newblock \emph{Advances in Applied Mathematics}, \textbf{48}(5), 615--639.
+
+\bibitem[{Hatzinger and Dittrich(2012)}]{prefmod}
+Hatzinger R, Dittrich R (2012).
+\newblock \enquote{{prefmod: An R Package for Modeling Preferences Based on
+  Paired Comparisons, Rankings, or Ratings}.}
+\newblock \emph{Journal of Statistical Software}, \textbf{48}(10), 1--31.
+
+\bibitem[{Irurozki \emph{et~al.}(2014{\natexlab{a}})Irurozki, Calvo, and
+  Lozano}]{Irurozki2014b}
+Irurozki E, Calvo B, Lozano JA (2014{\natexlab{a}}).
+\newblock \enquote{{Sampling and learning the Mallows and Generalized Mallows
+  models under the Cayley distance}.}
+\newblock \emph{Technical report}.
+\newblock \doi{EHU-KZAA-TR;2014-02}.
+\newblock \urlprefix\url{https://addi.ehu.es/handle/10810/11239}.
+
+\bibitem[{Irurozki \emph{et~al.}(2014{\natexlab{b}})Irurozki, Calvo, and
+  Lozano}]{Irurozki2014a}
+Irurozki E, Calvo B, Lozano JA (2014{\natexlab{b}}).
+\newblock \enquote{{Sampling and learning the Mallows and Weighted Mallows
+  models under the Hamming distance}.}
+\newblock \emph{Technical report}.
+\newblock \doi{EHU-KZAA-TR;2014-03}.
+\newblock \urlprefix\url{https://addi.ehu.es/handle/10810/11240}.
+
+\bibitem[{Irurozki \emph{et~al.}(2014{\natexlab{c}})Irurozki, Calvo, and
+  Lozano}]{Irurozki2014}
+Irurozki E, Calvo B, Lozano JA (2014{\natexlab{c}}).
+\newblock \enquote{{Sampling and learning the Mallows model under the Ulam
+  distance}.}
+\newblock \emph{Technical report}.
+\newblock \doi{EHU-KZAA-TR;2014-04}.
+\newblock \urlprefix\url{https://addi.ehu.es/handle/10810/11241}.
+
+\bibitem[{Lee and Yu(2012)}]{Lee20122486}
+Lee PH, Yu PLH (2012).
+\newblock \enquote{{Mixtures of weighted distance-based models for ranking data
+  with applications in political studies}.}
+\newblock \emph{Computational Statistics \& Data Analysis}, \textbf{56}(8),
+  2486--2500.
+
+\bibitem[{Mallows(1957)}]{mallows}
+Mallows CL (1957).
+\newblock \enquote{{Non-null ranking models}.}
+\newblock \emph{Biometrika}, \textbf{44}(1-2), 114--130.
+
+\bibitem[{Mandhani and Meila(2009)}]{Mandhani2009}
+Mandhani B, Meila M (2009).
+\newblock \enquote{{Tractable Search for Learning Exponential Models of
+  Rankings}.}
+\newblock \emph{Journal of Machine Learning Research}, \textbf{5}, 392--399.
+
+\bibitem[{Mao and Lebanon(2008)}]{Mao2008}
+Mao Y, Lebanon G (2008).
+\newblock \enquote{{Non-Parametric Modeling of Partially Ranked Data}.}
+\newblock \emph{Journal of Machine Learning Research}, \textbf{9}, 2401--2429.
+
+\bibitem[{Meila and Bao(2008)}]{meila08}
+Meila M, Bao L (2008).
+\newblock \enquote{{Estimation and Clustering with Infinite Rankings}.}
+\newblock In \emph{Uncertainty in Artificial Intelligence (UAI)}, pp. 393--402.
+  AUAI Press, Corvallis, Oregon.
+
+\bibitem[{Meila and Chen(2010)}]{Meila2010}
+Meila M, Chen H (2010).
+\newblock \enquote{{Dirichlet Process Mixtures of Generalized Mallows Models}.}
+\newblock In \emph{Uncertainty in Artificial Intelligence (UAI)}, pp. 285--294.
+
+\bibitem[{Mueller and Starr(2013)}]{Mueller2013}
+Mueller C, Starr S (2013).
+\newblock \enquote{{The Length of the Longest Increasing Subsequence of a
+  Random Mallows Permutation}.}
+\newblock \emph{Journal of Theoretical Probability}, \textbf{26}(2), 514--540.
+
+\bibitem[{Murphy and Martin(2003)}]{Murphy2003645}
+Murphy TB, Martin D (2003).
+\newblock \enquote{{Mixtures of distance-based models for ranking data}.}
+\newblock \emph{Computational Statistics \&amp; Data Analysis},
+  \textbf{41}(3–4), 645--655.
+\newblock ISSN 0167-9473.
+
+\bibitem[{Popov(2007)}]{Popov2007}
+Popov V (2007).
+\newblock \enquote{{Multiple genome rearrangement by swaps and by element
+  duplications}.}
+\newblock \emph{Theoretical computer science}, \textbf{385}(1-3), 115--126.
+
+\bibitem[{Press \emph{et~al.}(1992)}]{numerical_recipes_c}
+Press WH, Teukolsky SA, Vetterling WT, Flannery BP (1992).
+\newblock \emph{{Numerical Recipes in C (2Nd Ed.): The Art of Scientific
+  Computing}}.
+\newblock Cambridge University Press, New York, NY, USA.
+
+\bibitem[{Ziegler \emph{et~al.}(2012)Ziegler, Christiansen, Kriegman, and
+  Belongie}]{NIPS2012_0012}
+Ziegler A, Christiansen E, Kriegman D, Belongie S (2012).
+\newblock \enquote{{Locally Uniform Comparison Image Descriptor}.}
+\newblock In P~Bartlett, FCN Pereira, CJC Burges, L~Bottou, KQ~Weinberger
+  (eds.), \emph{Advances in Neural Information Processing Systems 25}, pp.
+  1--9.
+
+\end{thebibliography}
+
+
+
+\end{document}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

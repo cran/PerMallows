@@ -1,0 +1,24 @@
+\name{count.perms.unfixed.points.gtet}
+\alias{count.perms.unfixed.points.gtet}
+\title{Count permutations with at least a given number of unfixed points}
+\usage{
+count.perms.unfixed.points.gtet(perm.length, unfixed = perm.length)
+}
+\arguments{
+  \item{perm.length}{number of items in the permutations}
+
+  \item{unfixed}{optional the number of unfixed points}
+}
+\value{
+the number of permutations in which the number of unfixed
+points is greater than or equal to the specified argument
+}
+\description{
+Given the number of items in the permutations and the
+number of unfixed points u, how many permutations are there
+with at least u unfixed points?
+}
+\examples{
+count.perms.unfixed.points.gtet(4,1)
+}
+

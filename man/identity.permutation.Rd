@@ -1,0 +1,21 @@
+\name{identity.permutation}
+\alias{identity.permutation}
+\title{Generate identity the permutation}
+\usage{
+identity.permutation(perm.length)
+}
+\arguments{
+  \item{perm.length}{number of items in the permutation}
+}
+\value{
+the identity permutation of the specified number of items
+}
+\description{
+This function generates the identity permutation of a given
+number of items
+}
+\examples{
+identity.permutation(3)
+identity.permutation(7)
+}
+

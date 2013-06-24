@@ -1,0 +1,17 @@
+\name{cycle2str}
+\alias{cycle2str}
+\title{Friendly display the cycles}
+\usage{
+cycle2str(cy)
+}
+\arguments{
+  \item{cy}{a list with the set of cycles}
+}
+\description{
+Given a list with the cycles of a permutation, displays
+them in the standard cycle notation
+}
+\examples{
+cycle2str(permutation2cycles(c(1,5,2,3,4)))
+}
+

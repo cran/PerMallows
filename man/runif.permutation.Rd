@@ -1,0 +1,23 @@
+\name{runif.permutation}
+\alias{runif.permutation}
+\title{Random permutation}
+\usage{
+runif.permutation(n = 1, perm.length)
+}
+\arguments{
+  \item{n}{optional number of permutations to generate}
+
+  \item{perm.length}{length of the permutations generated}
+}
+\value{
+a single permutation or a matrix with n rows, each being a
+permutation. Every permutation is drawn uniformly at random
+and has length perm.length
+}
+\description{
+Generate a collection of n permutations uniformly at random
+}
+\examples{
+runif.permutation(1,5)
+}
+

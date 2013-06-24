@@ -1,0 +1,21 @@
+\name{read.permutation.file}
+\alias{read.permutation.file}
+\title{Read a text file with a collection of permtuations}
+\usage{
+read.permutation.file(path)
+}
+\arguments{
+  \item{path}{string with a path}
+}
+\value{
+collection of permutations in matrix form
+}
+\description{
+This function reads the text file in the specified path and
+checks if each row is a proper permutation
+}
+\examples{
+path = system.file("test.txt", package='PerMallows')
+sample = read.permutation.file(path)
+}
+
