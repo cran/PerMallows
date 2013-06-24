@@ -105,7 +105,6 @@ void Ulam_disk::save_counts_to_file(){
         //exit(EXIT_FAILURE);
         return;
     }
-    num_permus_per_dist_ = new long double[ n_ ];
     for (int i = 0 ; i < n_ ;i++) num_permus_per_dist_[ i ] = 0 ;
     
     Ferrers_diagram*f;
@@ -147,7 +146,7 @@ void Ulam_disk::save_counts_to_file(){
     for (int i = 0 ; i < n_; i++ ){
         file_permus_per_dist<< num_permus_per_dist_[ i ]<<endl ;
     }
-    delete [] num_permus_per_dist_;
+    //delete [] num_permus_per_dist_;
     file_permus_per_dist.close();
 }
 

@@ -52,11 +52,7 @@ public:
     void    dist_decomp_vector2perm(int* vec, int* sigma) ;
 
     /***********    end virtual    **************/
-    void learning_experiments_approx_2(int m, int **freq_neg, int *time_lap, int*time_vns, int *sigma_0, int * dist_lap, int * dist_vns, double * likeli_lap, double * likeli_vns);
-    void learning_experiments_approx_1(int m, double *theta, int ** freq_neg );
-
-    /******     experiments ***/
-
+    
     Hamming(int n){n_ = n; deran_num_ = NULL;
         Generic gen;
         esp_red_   = new long  double[ n + 1 ];
@@ -108,10 +104,6 @@ public:
     }
         
     
-    
-    void multistage_sampling_experiments(int m, double*theta, double*error, double*time);
-    void distances_sampling_experiments(int m, double theta, double *error, double*time) ;
-    void gibbs_sampling_experiments(int m, double*theta, double *error, double*time);
     
     void sample(double* theta, int m, int**samples);
 

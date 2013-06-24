@@ -40,30 +40,35 @@ extern "C" {
         Generic gen;
         Exponential_model * exp_mod = gen.new_instance(*dist_id, *n);
         *d=exp_mod->distance(s1,s2);
+        delete exp_mod;
     }
     
     void count_permus_at_dist (int*dist_id, int*n, int*d, double*res) {
         Generic gen;
         Exponential_model * exp_mod = gen.new_instance(*dist_id, *n);
         *res= (double) exp_mod->num_permus_at_distance(*d);
+        delete exp_mod;
     }
     
     void probability(int*dist_id, int*n, int*sigma, int*sigma_0, double*theta, double*prob){
         Generic gen;
         Exponential_model * exp_mod = gen.new_instance(*dist_id, *n);
         *prob = exp_mod->probability(sigma, sigma_0, theta);
+        delete exp_mod;
     }
     
     void get_altern_repre_for_permu(int*dist_id, int*n, int*sigma, int*vec){
         Generic gen;
         Exponential_model * exp_mod = gen.new_instance(*dist_id, *n);
         exp_mod->perm2dist_decomp_vector(sigma, vec);
+        delete exp_mod;
     }
     
     void get_permu_given_altern_repre(int*dist_id, int*n, int*vec, int*sigma){
         Generic gen;
         Exponential_model * exp_mod = gen.new_instance(*dist_id, *n);
         exp_mod->dist_decomp_vector2perm(vec, sigma);
+        delete exp_mod;
     }
     
     void expectation(int*dist_id, int* model, int *n, double * theta, double* h_avg){
@@ -72,16 +77,19 @@ extern "C" {
         if ( *model == MALLOWS_MODEL )
           h_avg[0] = exp_mod->expectation(theta[ 0 ]);
         else exp_mod->expectation(theta, h_avg);
+        delete exp_mod;
     }
     
     void save_counts_to_files ( int*n){
         Ulam_disk * ul = new Ulam_disk(*n);
         ul->save_counts_to_file();
+        delete ul;
     }
     
     void marginals ( int*n, int *dist_id, int *h, double * theta, double *res){
         Hamming *ham = new Hamming(*n);
         *res = ham->compute_marginal(h, theta);
+        delete ham;
     }
     
     
@@ -105,6 +113,9 @@ extern "C" {
             for (int j = 0; j < n; j++)
                 REAL(Rval)[i + m * j] = sample[i][j];
         UNPROTECT(1);
+        for (int i = 0 ; i < m ;  i ++ ) delete [] sample[ i ];
+        delete [] sample;
+        delete exp_mod;
         return Rval;
     }
     
@@ -124,6 +135,9 @@ extern "C" {
             for (int j = 0; j < n; j++)
                 REAL(Rval)[i + m * j] = sample[i][j];
         UNPROTECT(1);
+        for (int i = 0 ; i < m ;  i ++ ) delete [] sample[ i ];
+        delete [] sample;
+        delete exp_mod;
         return Rval;
     }
     
@@ -134,12 +148,11 @@ extern "C" {
                                      SEXP theta_var, SEXP model_var,SEXP method_var){
         //method_var == 1 multistage
         //method_var == 2 gibbs
-        //model_var == 0 MM
-        //model_var == 1 GMM
         int m  = INTEGER_VALUE(m_var);
         int n  = INTEGER_VALUE(n_var);
         int model    = INTEGER_VALUE(model_var);//GMM MM
-        int method   = INTEGER_VALUE(method_var);//gibbs...
+        int method ;
+        method = INTEGER_VALUE(method_var);//gibbs...
         int dist_id  = INTEGER_VALUE(dist_id_var);
         PROTECT(theta_var = AS_NUMERIC(theta_var));
         double*theta=NUMERIC_POINTER(theta_var);
@@ -160,6 +173,9 @@ extern "C" {
             for (int j = 0; j < n; j++)
                 REAL(Rval)[i + m * j] = sample[i][j];
         UNPROTECT(1);
+        for (int i = 0 ; i < m ;  i ++ ) delete [] sample[ i ];
+        delete [] sample;
+        delete exp_mod;
         return Rval;
     }
     
@@ -181,14 +197,14 @@ extern "C" {
         int estim = INTEGER_VALUE(estim_var); // 0 exact;
         int dist_id = INTEGER_VALUE(dist_id_var);
         int**c_samples=new int*[m];
+        int*sigma_0=new int[n];
+        
         for(int i=0;i<m;i++){
             c_samples[i]=new int[n];
             for(int j=0;j<n;j++){
                 c_samples[i][j]=INTEGER(samples)[i + m * j];
             }
         }
-        int*sigma_0=new int[n];
-        
         Generic gen;
         Exponential_model * exp_mod = gen.new_instance(dist_id, n);
         if (estim == 0)
@@ -204,6 +220,10 @@ extern "C" {
         p_myint = INTEGER_POINTER(myint);
         for(int i=0;i<n;i++) p_myint[i] = sigma_0[i];
         UNPROTECT(2);
+        delete exp_mod;
+        for(int i=0;i<m;i++) delete [] c_samples[ i ];
+        delete [] c_samples;
+        delete [] sigma_0;
         return myint;
     }
     
@@ -240,7 +260,9 @@ extern "C" {
         for (int i = 0; i < n ; i++) REAL(Rval)[i] = theta[i];
         UNPROTECT(1);
         delete [] theta;
-        //delete [] sigma_0;
+        for (int i = 0 ; i < m ;  i ++ ) delete [] samples[ i ];
+        delete [] samples;
+        delete exp_mod;
         return Rval;
     }
     //Call("get_log_likelihood",dist_id,    permu.length, num.permus, sigma_0, theta, samples, model)
@@ -290,7 +312,10 @@ extern "C" {
         REAL(Rval)[0] = likeli;
         //for (int i = 0; i < n - 1; i++) REAL(Rval)[i] = theta[i];
         UNPROTECT(1);
-        //delete [] sigma_0;
+        delete exp_mod;
+        for (int i = 0 ; i < m ;  i ++ ) delete [] samples[ i ];
+        delete [] samples;
+        delete [] sigma_0;
         return Rval;
     }
     

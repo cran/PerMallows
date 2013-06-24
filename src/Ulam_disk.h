@@ -51,7 +51,7 @@ public:
         strcpy(str_base_path, "./");///Users/eki/Library/Developer/Xcode/DerivedData/perms_mallows-fxsohiuulqqerjgnrdpitiwnjkin/Build/Products/Debug/permus_per_shape_5_0
     }
 
-    ~Ulam_disk(){    }
+    ~Ulam_disk(){};
     
     void    save_counts_to_file();
     double  expectation(double theta);

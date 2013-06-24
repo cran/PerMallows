@@ -168,20 +168,18 @@ double Newton_raphson::f(double theta) {
         return numer / denom - dist_avg_;
     }else if (distance_id_ == HAMMING_DISTANCE && model_ == MALLOWS_MODEL ){
         Generic gen;
-        long double     x_j = 0 , sum_to_n = 0 , sum_to_n_1 = 0 , psi = 0 , psi_der = 0;
+        long double     x_j = 0 , sum_to_n = 0 , sum_to_n_1 = 0 , psi = 0 , psi_der = 0, f_fligner =0;
         for ( int j = 0 ; j <= n_ ; j++ ){
             x_j = (long double) pow(exp(theta)-1, j) / facts_[ j ];
             if ( j < n_ ) sum_to_n_1 += x_j;
             sum_to_n += x_j;
-            if(sum_to_n> DBL_MAX ||sum_to_n != sum_to_n )
-                return DBL_MAX;
+            //if(sum_to_n> DBL_MAX ||sum_to_n != sum_to_n )  return DBL_MAX;
         }
         psi = facts_[ n_ ] * exp(-theta * n_ ) * sum_to_n;
         psi_der = - n_ * psi + facts_[ n_ ] * exp( theta * ( 1 - n_ )) * sum_to_n_1;
-        double f_fligner = (double)  (psi_der / psi + dist_avg_);
+        f_fligner = (double)  (psi_der / psi + dist_avg_);
         //cout<<"theta "<<theta<<" dist "<<dist_avg_<<" fu "<<f_fligner<<endl;
-        if(f_fligner != f_fligner )
-            f_fligner=0;//trace
+        //if(f_fligner != f_fligner )  f_fligner=0;//trace
         return f_fligner;
     }else if (distance_id_ == HAMMING_DISTANCE && model_ == GENERALIZED_MALLOWS_MODEL ){
         //cout<<"Solve Weigthed Hamming Mallows with the multivariate newthon Raphson, mnewt "<<endl;

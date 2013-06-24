@@ -378,9 +378,9 @@ void Cayley::get_max_item_in_current_cycle(int *sigma, int i, int *max_i ){
 
 
 void Cayley::gibbs_sampling(int m, double *theta, int model, int **samples) {
+    int *sigma  = new int[ n_ ];
+    Generic     gen;
     int burning_period_samples = n_*log(n_);
-    int *sigma = new int[ n_ ];
-    Generic  gen;
     gen.generate_random_permutation(n_, 1, sigma);
     
     for(int sample= 0;sample<m+burning_period_samples;sample++){
@@ -414,6 +414,7 @@ void Cayley::gibbs_sampling(int m, double *theta, int model, int **samples) {
             for (int i = 0 ; i < n_; i ++ )   samples[sample-burning_period_samples][ i ] =sigma[ i ];
         }
     }
+    delete [] sigma;
 }
 
 
@@ -745,7 +746,7 @@ double Cayley::estimate_consensus_exact_mm(int m, int **samples, int*sigma_0_ini
     }
 
     double visited_nodes = estimate_consensus_exact_mm_core(m, 0 , samples, samples_inv, x_acum, sigma_0_aux, sigma_0_inv_aux, 0, sigma_0, &best_distance);
-    for (int i = 0 ; i < n_; i ++ ) delete []samples_inv[ i ];
+    for (int i = 0 ; i < m; i ++ ) delete [] samples_inv[ i ];
     delete [] samples_inv;
     delete [] x_acum;
     delete [] sigma_0_aux;

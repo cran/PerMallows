@@ -109,19 +109,27 @@ public:
         for (int i = 0 ; i < n_ ; i++) num_permus_per_dist_[ i ] = 0 ;
         facts_     = new long double [ n + 1 ];
         facts_[0]=1;
-        for (int i=1;i< n + 1 ;i++)
-            facts_[i] = facts_[i-1] * i;
+        for (int i=1;i< n + 1 ;i++)  facts_[i] = facts_[i-1] * i;
         comp_=new int[n_];
         inv_ = new int[ n_];
         M = new int[n_];
         P = new int[n_];
-
+//cout<<"kkkkkkkkk1"<<endl;
     }
     ~Ulam(){
-        delete [] num_permus_per_dist_;
+      //std::for_each(shapes_of_n_->begin(), shapes_of_n_->end(), []( Ferrers_diagram* p) { delete p; });
+        for ( int i = 0 ; i < shapes_of_n_->size() ; i++ ) delete shapes_of_n_->at(i);
+        shapes_of_n_->clear();
         delete shapes_of_n_ ;
         delete [] first_index_at_dist_;
+        delete [] num_permus_per_dist_;
         delete [] facts_;
+        //cout<<"kkkkkkkkk2"<<endl;
+        delete [] comp_;
+        delete [] inv_;
+        delete [] M;
+        delete [] P;
+
     }
     int     distance(int*sigma){  return n_ - longest_increasing_subsequence(sigma);    }
     int     integer_partitions(int n);

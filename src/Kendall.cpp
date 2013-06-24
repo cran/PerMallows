@@ -180,10 +180,10 @@ void Kendall::multistage_sampling(int m, double*theta, int**samples){
 
 
 void Kendall::gibbs_sampling(int m, double *theta, int model, int **samples) {
+    Generic     gen;
+    int*sigma   = new int[ n_ ];
+    int *v      = new int[ n_ ];
     int burning_period_samples = n_*log(n_);
-    int*sigma = new int[ n_ ];
-    int *v = new int[ n_ ];
-    Generic  gen;
     gen.generate_random_permutation( n_ , 1, sigma);
     perm2dist_decomp_vector( sigma , v);
     
@@ -199,7 +199,7 @@ void Kendall::gibbs_sampling(int m, double *theta, int model, int **samples) {
             if( model == MALLOWS_MODEL ){
                 if(rand_double < exp(-theta[0])) make_swap = true;
             }else{
-                //\[	exp(-\theta_i*v_{i+1}(\sigma) - \theta_{i+1}*v_i(\sigma) +\theta_i * v_i(\sigma) + \theta_{i+1}* v_{i+1}(\sigma)) 	\]
+                //\[  exp(-\theta_i*v_{i+1}(\sigma) - \theta_{i+1}*v_i(\sigma) +\theta_i * v_i(\sigma) + \theta_{i+1}* v_{i+1}(\sigma)) 	\]
                 //equiv TODO
                 double ratio = exp(-theta[ i ] * (v[ i + 1 ]+1)  -theta[ i + 1 ] * v [ i ]   +theta[ i ] * v[ i ] +theta[ i + 1 ] * v [ i + 1 ]);
                 if(rand_double < ratio ) make_swap = true;
@@ -219,6 +219,8 @@ void Kendall::gibbs_sampling(int m, double *theta, int model, int **samples) {
             for(int i = 0  ; i < n_ ; i ++)   samples[ sample - burning_period_samples ][ i ] = sigma[ i ];
         }
     }
+    delete [] sigma;
+    delete [] v;
 }
 
 void Kendall::borda(int **samples, int m, int * sigma_0){
@@ -304,6 +306,7 @@ void Kendall::estimate_theta(int m, int*sigma_0, int**samples, int model, double
         delete [] comp;
         delete [] v;
         delete [] s_inv;
+        delete [] v_avg;
     }
     delete [] psi_vec;
 }

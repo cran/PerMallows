@@ -109,7 +109,7 @@ public:
 
     Cayley(int ns){
         n_=ns;
-        Generic gen;
+        //Generic gen;
         //gen.seed();
         stirling_matrix_ = new long double *[n_+1];
         facts_ = new long double[n_+1];
@@ -124,17 +124,17 @@ public:
         for (int i = 0 ; i <= n_; i ++){
             stirling_matrix_[ i ][ i ] = 1;
             stirling_matrix_[ i ][ 0 ] = 0;
-            stirling_matrix_[ i ][ 1 ] = facts_[ i - 1 ];
+            if ( i > 0 ) stirling_matrix_[ i ][ 1 ] = facts_[ i - 1 ];////
         }
         for (int i = 2 ; i <= n_; i ++)
             for (int j = 2 ; j < i ; j++)
                 stirling_matrix_[ i ][ j ] = stirling_matrix_[ i - 1 ][ j - 1 ] + (i - 1) * stirling_matrix_[ i - 1 ][ j ];
-        
-        
+      
     }
 
     ~Cayley(){
         for (int i = 0 ; i < n_+1; i ++ ) delete [] stirling_matrix_[ i ];
+        delete [] stirling_matrix_;
         delete [] facts_;
     };
     

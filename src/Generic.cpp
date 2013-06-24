@@ -30,11 +30,12 @@ Exponential_model* Generic::new_instance(int distance_id, int n){
 void Generic::elementary_symmetric_polynomial(double* theta, int n, long double*theta_exp_aux, long double **esp_aux, long double *esp){
     //esp[j][n]: j-th elementarySymmetricPolynomials of n items
     //theta_exp_aux , esp_aux: are defined outside because the learning process (NewtonRaphson) calles this func lots of times
-    for ( int i = 0 ; i <= n ; i ++ ){
+    for ( int i = 0 ; i < n ; i ++ ){
         //aux_esp_[ i ] = new long double[ n + 1 ];
         for ( int j = 0 ; j <= n ; j ++) esp_aux[i][j]=0;
-        if ( i < n ) theta_exp_aux[ i + 1 ] = (long double)exp( theta[ i ]) - 1 ;
+        theta_exp_aux[ i + 1 ] = (long double)exp( theta[ i ]) - 1 ;
     }
+    for ( int j = 0 ; j <= n ; j ++) esp_aux[ n ][ j ] = 0;
     //for ( int j = 0 ; j <= n ; j ++) aux_esp_[ 0 ][ j ] = 1;
     for ( int j = 1 ; j <= n ; j ++)
         for ( int k = 1 ; k<= j ; k ++)

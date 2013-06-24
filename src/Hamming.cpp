@@ -5,7 +5,7 @@
 //  Created by Ekhine Irurozki on 20/06/13.
 //  Copyright (c) 2013 Ekhine Irurozki. All rights reserved.
 //
-#include <cmath>
+
 #include "Hamming.h"
 #include "Generic.h"
 #include "Lap.h"
@@ -14,354 +14,6 @@
 #include "Newton_raphson.h"
 
 
-void Hamming::learning_experiments_approx_1(int m, double *theta, int ** freq_neg ){
-    int     *h = new int[ n_ ];
-    int     *h_acumul_last      = new int[ n_ ];    for( int i = 0 ; i < n_ ; i ++ ) h_acumul_last[ i ] = 0;
-    double  *h_acumul_all_avg   = new double[ n_ ]; for( int i = 0 ; i < n_ ; i ++ ) h_acumul_all_avg[ i ] = 0;
-    double  *h_expected = new double[ n_ ];
-    Generic gen;
-    int     * sample = new int[ n_ ];
-    for ( int i = 0 ; i < n_ ; i ++ )
-        t_sampling_[ i ] = (long double)exp( theta[ i ]) - 1 ;
-    long double  marg, marg_0, marg_1, rand_double = 0 ;
-    long double  marg_ini = psi_whm(theta);
-    //t_, aux_esp_, podrian ser locales OJO TODO
-    gen.elementary_symmetric_polynomial( theta, n_ , t_, aux_esp_, esp_ini_ );
-    //long double  marg_ini = compute_marginal_iterative(h , theta, 0);
-    for (int s = 0 ; s < m ; s ++) {// halt (x_axis) m
-        //    for (int s = 0 ; cont < 15 ; s ++) {//halt (x-axis) time
-        marg = marg_ini;
-        for (int items_set = 0 ; items_set < n_; items_set++) {
-            h[ items_set ] = 0;
-            marg_0 = compute_marginal_iterative(h , theta, items_set + 1);
-            //double marg_0_slow = compute_marginal_slow(h , theta, items_set + 1);
-            //if ( abs(marg_0/marg  - marg_0_slow/marg ) > 0.00001 )
-            //  bool traza = true;
-            marg_1 = marg - marg_0;
-            //long double real_marg_0 = marg_0 / marg;
-            //long double real_marg_1 = marg_1 / marg;
-            rand_double = marg * (double)rand() / (RAND_MAX);
-            if (rand_double < marg_0) {
-                marg = marg_0;
-                //h[ items_set ] = 0;
-            }else{
-                marg = marg_1;
-                h[ items_set ] = 1;
-            }
-        }
-        dist_decomp_vector2perm(h , sample);//save to samples - removed
-        for( int i = 0 ; i < n_ ; i ++ ) freq_neg[ i ][ sample[ i ] - FIRST_ITEM ]--;
-
-    }
-    delete [] h_expected;
-    delete [] h_acumul_last;
-    delete [] h_acumul_all_avg;
-    delete [] h;
-}
-
-void Hamming::learning_experiments_approx_2(int m, int **freq_neg, int *time_lap, int*time_vns, int *sigma_0, int * dist_lap, int * dist_vns, double * likeli_lap, double * likeli_vns){
-    Lap     lap;
-    Newton_raphson nr(n_);
-    Generic gen;
-    int     * sigma_0_inv = new int[ n_ ],* sigma_0_inv_neig_best = new int[ n_ ];
-   // int     ** freq = new int*[ n_ ];
-    int     * rows=new int[n_], *cols=new int[n_], *u=new int[n_], *v=new int[n_];
-    double  * h_avg = new double[ n_ ],*theta= new double[ n_ ];
-    double  a1 = 0;
-    //for (int i = 0 ; i < n_ ; i++){ freq[ i ]= new int[n_ ]; for(int j = 0 ; j < n_ ;  j++) freq[ i ][ j ] = 0 ;}
-    //for (int i = 0 ; i < m ; i ++)for (int j = 0 ; j < n_ ; j ++)freq[ j ][ samples[ i ][ j ] - FIRST_ITEM ]--;//for the lap, minimize
-
-    gen.ini_chrono();
-    lap.lap(n_, freq_neg, rows, cols, u, v);
-    *time_lap = gen.end_chrono();
-    for (int i = 0 ; i < n_ ; i++){
-        sigma_0[ i ] = rows[i] + FIRST_ITEM;
-        sigma_0_inv[ (rows[i] + FIRST_ITEM )- FIRST_ITEM] = i + FIRST_ITEM;
-    }
-    
-    for (int i = 0 ; i < n_ ; i++)
-        for(int j = 0 ; j < n_ ;  j++)
-            freq_neg[ i ][ j ] = freq_neg[ i ][ j ] * -1;
-    /// make freq_neg positive
-    
-    for (int i = 0 ; i < n_ ; i++)
-        h_avg[ i ] = (double ) 1 - (double)freq_neg[ sigma_0_inv[ i ] - FIRST_ITEM ][ i ] / m ;
-    
-    nr.mle_theta_weighted_mallows_hamming( m , h_avg, theta);
-    for ( int i = 0 ; i < n_ ; i++) a1 += h_avg[ i ] * theta[ i ] ;
-    *dist_lap = 0;
-    for ( int i = 0 ; i < n_ ; i++) if (sigma_0[ i ] != i + 1 ) (*dist_lap)++;
-    *likeli_lap = *likeli_vns = (double)-m * (a1 + log ( psi_whm(theta))); //hay q igualarlos para el siguiente paso
-//    if (*likeli_lap > 0 ) bool traza = true;
-    
-    gen.ini_chrono();
-    gen.generate_random_permutation(n_, FIRST_ITEM, sigma_0_inv);//vns from random
-    for (int i = 0 ; i < n_ ; i++)
-        h_avg[ i ] = (double ) 1 - (double)freq_neg[ sigma_0_inv[ i ] - FIRST_ITEM ][ i ] / m ;
-    nr.mle_theta_weighted_mallows_hamming( m , h_avg, theta);
-    for ( int i = 0 ; i < n_ ; i++) a1 += h_avg[ i ] * theta[ i ] ;
-     *likeli_vns = (double)-m * (a1 + log ( psi_whm(theta)));
-    variable_neighborhood_search(m , freq_neg , sigma_0_inv , likeli_vns);
-    
-    *time_vns = gen.end_chrono();
-    
-    for(int i = 0 ; i < n_; i ++) sigma_0[ sigma_0_inv[ i ] - FIRST_ITEM ] = i + FIRST_ITEM;
-    *dist_vns = 0;
-    for ( int i = 0 ; i < n_ ; i++) if (sigma_0[ i ] != i + 1 ) (*dist_vns) ++;
-    
-    for (int i = 0 ; i < n_ ; i++)
-        for(int j = 0 ; j < n_ ;  j++)
-            freq_neg[ i ][ j ] = freq_neg[ i ][ j ] * -1;
-    /// make freq_neg negative
-    
-    delete [] theta;
-    delete [] rows;
-    delete [] h_avg;
-    delete [] cols;
-    delete [] u;
-    delete [] v;
-    delete [] sigma_0_inv_neig_best;
-    delete [] sigma_0_inv;
-}
-
-void Hamming::multistage_sampling_experiments(int m, double *theta, double *error, double * time){
-    int     *h = new int[ n_ ];
-    int     *h_acumul_last = new int[ n_ ];for( int i = 0 ; i < n_ ; i ++ ) h_acumul_last[ i ] = 0;
-    double  *h_acumul_all_avg = new double[ n_ ];for( int i = 0 ; i < n_ ; i ++ ) h_acumul_all_avg[ i ] = 0;
-    double  *h_expected = new double[ n_ ];
-    int     cont = 0 , acum_time = 0 , s_prev =  0;
-    Generic gen;
-    gen.ini_chrono();
-    int     * sample = new int[ n_ ];
-    for ( int i = 0 ; i < n_ ; i ++ )
-        t_sampling_[ i ] = (long double)exp( theta[ i ]) - 1 ;
-    long double  marg, marg_0, marg_1, rand_double = 0 ;
-    long double  marg_ini = psi_whm(theta);
-    //t_, aux_esp_, podrian ser locales OJO TODO
-    gen.elementary_symmetric_polynomial( theta, n_ , t_, aux_esp_, esp_ini_ );
-    //long double  marg_ini = compute_marginal_iterative(h , theta, 0);
-    for (int s = 0 ; s < m ; s ++) {// halt (x_axis) m
-//    for (int s = 0 ; cont < 15 ; s ++) {//halt (x-axis) time
-        marg = marg_ini;
-        for (int items_set = 0 ; items_set < n_; items_set++) {
-            h[ items_set ] = 0;
-            marg_0 = compute_marginal_iterative(h , theta, items_set + 1);
-            //double marg_0_slow = compute_marginal_slow(h , theta, items_set + 1);
-            //if ( abs(marg_0/marg  - marg_0_slow/marg ) > 0.00001 )
-              //  bool traza = true;
-            marg_1 = marg - marg_0;
-            rand_double = marg * (double)rand() / (RAND_MAX);
-            if (rand_double < marg_0) {
-                marg = marg_0;
-                //h[ items_set ] = 0;
-            }else{
-                marg = marg_1;
-                h[ items_set ] = 1;
-            }
-        }
-        dist_decomp_vector2perm(h , sample);//save to samples - removed
-        for( int i = 0 ; i < n_ ; i ++ ) h_acumul_last[ i ] += h[ i ];
-
-        if ((s+1) % 100 == 0 ) {//s+1 permutations
-            acum_time += gen.end_chrono();
-            if ( acum_time >= 1 * 1000 ){
-                if (cont == 0 ) time[cont] = acum_time;
-                else time[cont] = time[cont-1]+ acum_time;
-                acum_time = 0 ;
-                for( int i = 0 ; i < n_ ; i ++ )
-                    h_acumul_all_avg[ i ] = (double)((h_acumul_all_avg[ i ]* (s_prev ) ) + h_acumul_last[ i ] )/(s+1+s_prev);
-                //cout<<"s_m "<<s<<endl;
-                s_prev += (s+1);
-                s = 0 ;
-                expectation(theta, h_expected);//
-                for( int i = 0 ; i < n_ ; i ++ ) h_acumul_last[ i ] = 0;
-                error[ cont ] = 0;
-                for( int i = 0 ; i < n_ ; i ++ ) error[ cont ] += abs(h_expected[ i ] - h_acumul_all_avg[ i ] );
-                cont++;
-                error[ cont ] = (s+1+s_prev);//all but the last one are overwritte
-            }
-            gen.ini_chrono();
-        }
-        /*if ((s+1) % BUCKET_EXP_HAM == 0 ) {//s+1 permutations
-            if (cont == 0 ) time[cont] = gen.end_chrono();
-            else time[cont] = time[cont-1]+ gen.end_chrono();
-            for( int i = 0 ; i < n_ ; i ++ ) h_acumul_all_avg[ i ] = (double)((h_acumul_all_avg[ i ]* (s + 1 - BUCKET_EXP_HAM) ) + h_acumul_last[ i ] )/(s+1);
-            expectation_gmm(theta, h_expected);
-            for( int i = 0 ; i < n_ ; i ++ ) h_acumul_last[ i ] = 0;
-            error[ cont ] = 0;
-            for( int i = 0 ; i < n_ ; i ++ ) error[ cont ] += abs(h_expected[ i ] - h_acumul_all_avg[ i ] );
-            cont++;
-            gen.ini_chrono();
-        }*/
-    }
-    delete [] h_expected;
-    delete [] h_acumul_last;
-    delete [] h_acumul_all_avg;
-    delete [] h;
-}
-void Hamming::distances_sampling_experiments(int m, double theta, double *error, double*time){
-    Generic     gen;
-    int         d_max = n_ ;
-    int         target_dist=0;
-    double      * theta_array       = new double[ n_ ]; for (int i = 0 ; i < n_ ; i++ ) theta_array[ i ] = theta;
-    long double      * fact       = new long double[ n_ + 1 ];
-    long double      * hamm_count = new long double[ n_ + 1 ];
-    long double      rand_val;
-    int     *h_acumul_last = new int[ n_ ];         for( int i = 0 ; i < n_ ; i ++ ) h_acumul_last[ i ] = 0;
-    double  *h_acumul_all_avg = new double[ n_ ];   for( int i = 0 ; i < n_ ; i ++ ) h_acumul_all_avg[ i ] = 0;
-    double  *h_expected = new double[ n_ ];
-    long double     * acumul = new long double[ d_max + 1];//+1
-    int *sigma = new int[ n_ ];
-    int     cont = 0 , acum_time = 0 , s_prev =  0;
-    
-    double * theta_a = new double[ n_ ];for( int i = 0 ; i < n_ ; i ++ ) theta_a[ i ] = theta;
-    
-    
-    gen.ini_chrono();
-
-    fact[0]=1; fact[1]=1;
-    for ( int i = 2 ; i <= d_max ; i++) fact[i] = i * fact[i-1];
-    for ( int d = 0 ; d <= d_max ; d++) hamm_count[d] = deran_num_[d] *fact[n_] / (fact[d] * fact[n_ - d]) ;
-    acumul[ 0 ] = exp( -theta  * 0 ) * hamm_count[ 0 ];
-    for ( int dista = 1 ; dista <= d_max  ; dista++)
-        acumul[ dista ] = acumul[ dista - 1 ] +  exp(-theta  * dista) * hamm_count[ dista ];
-    
-    //gen.print_double_vector(hamm_count, n_+1);
-    //for (int d = 0 ; d <= d_max ; d++) cout<<acumul[d]<<" ";cout<<endl;
-    for( int s = 0 ; s < m ; s++ ){
-    //for (int s = 0 ; cont < 15 ; s ++) {//halt (x-axis) time
-        target_dist = 0;
-        rand_val = (long double) acumul[ d_max ] * (double) rand() / RAND_MAX;
-        while ( acumul[ target_dist ] <= rand_val ) target_dist ++;
-        if ( acumul[ d_max ] > DBL_MAX || acumul[ d_max ] < -DBL_MAX || target_dist == 1 || acumul[ d_max ] != acumul[ d_max ] || target_dist > n_ ){
-            //cout<<"ERROR: distances_sampling "<<endl;
-            return;
-        }
-        random_permu_at_dist_d( target_dist , sigma);// ojo
-        //random_permu_at_dist_d( target_dist , samples[ s ]);
-        for (int i = 0 ; i < n_ ; i++) h_acumul_last[ i ] += (sigma[ i ] != i+1);
-        
-        if ((s+1) % 100 == 0 ) {//s+1 permutations
-            acum_time += gen.end_chrono();
-            if ( acum_time >= 1 * 1000 ){
-                if (cont == 0 ) time[cont] = acum_time;
-                else time[cont] = time[cont-1]+ acum_time;
-                acum_time = 0 ;
-                for( int i = 0 ; i < n_ ; i ++ )
-                    h_acumul_all_avg[ i ] = (double)((h_acumul_all_avg[ i ]* (s_prev ) ) + h_acumul_last[ i ] )/(s+1+s_prev);
-                //cout<<"s_d "<<s<<endl;
-                s_prev += (s+1);
-                s = 0 ;
-                expectation(theta_a, h_expected);//
-                for( int i = 0 ; i < n_ ; i ++ ) h_acumul_last[ i ] = 0;
-                error[ cont ] = 0;
-                for( int i = 0 ; i < n_ ; i ++ ) error[ cont ] += abs(h_expected[ i ] - h_acumul_all_avg[ i ] );
-                cont++;
-                error[ cont ] = (s+1+s_prev);//all but the last one are overwritten
-            }
-            gen.ini_chrono();
-        }
-        /*if ((s+1) % BUCKET_EXP_HAM == 0 ) {
-            if (cont == 0 ) time[cont] = gen.end_chrono();
-            else time[cont] = time[cont-1]+ gen.end_chrono();
-            
-            for( int i = 0 ; i < n_ ; i ++ ) h_acumul_all_avg[ i ] = (double)( ( h_acumul_all_avg[ i ]* (s + 1 - BUCKET_EXP_HAM) ) + h_acumul_last[ i ] )/(s+1);
-            expectation_gmm(theta_array, h_expected);
-            for( int i = 0 ; i < n_ ; i ++ ) h_acumul_last[ i ] = 0;
-            error[ cont ] = 0;
-            for( int i = 0 ; i < n_ ; i ++ ) error[ cont ] += abs(h_expected[ i ] - h_acumul_all_avg[ i ] );
-            
-            cont++;
-            gen.ini_chrono();
-        }*/
-    }
-    delete [] fact;
-    delete [] acumul;
-    delete [] hamm_count;
-    delete [] theta_array;
-    delete [] h_expected;
-    delete [] h_acumul_last;
-    delete [] h_acumul_all_avg;
-}
-void Hamming::gibbs_sampling_experiments(int m, double*theta, double *error, double*time) {
-    int burning_period_samples = n_*n_;
-    int*sigma = new int[ n_ ];
-    Generic  gen;
-    gen.generate_random_permutation( n_ , 1, sigma);
-    int h_i = 0, h_j = 0, h_i_new = 0, h_j_new = 0;
-    int     cont   =  0;
-    int     *h_acumul_last = new int[ n_ ];         for( int i = 0 ; i < n_ ; i ++ ) h_acumul_last[ i ] = 0;
-    double  *h_acumul_all_avg = new double[ n_ ];   for( int i = 0 ; i < n_ ; i ++ ) h_acumul_all_avg[ i ] = 0;
-    double  *h_expected = new double[ n_ ];
-    int * sigma_copy = new int[ n_];
-    gen.ini_chrono();
-
-    //    for ( int sample = 0 ; cont < 15 ; sample ++){
-    for ( int sample = 0 ; sample < m + burning_period_samples ; sample ++){
-        int i, j;
-        do{
-            i = rand() % (n_);
-            j = rand() % (n_);
-        }while ( i == j );
-        h_i     = (i == sigma[i] - 1) ? 0 : 1 ;
-        h_j     = (j == sigma[j] - 1) ? 0 : 1 ;
-        h_i_new = (i == sigma[j] - 1) ? 0 : 1 ;
-        h_j_new = (j == sigma[i] - 1) ? 0 : 1 ;
-        
-        double ratio = exp(- h_j_new * theta[j]) * exp(- h_i_new * theta[i]) / (exp(- h_j * theta[j]) * exp(- h_i * theta[i]));
-        double rand_double = (double)rand()/RAND_MAX;
-        if (rand_double < ratio ) {
-            int aux = sigma[i];
-            sigma[i] = sigma[j];
-            sigma[j] = aux;
-        }
-        if(sample>=burning_period_samples){
-            //samples[sample-burning_period_samples]=new int[ n_ ];
-            //for ( int i = 0  ; i < n_ ; i ++)   samples[ sample - burning_period_samples ][ i ] = sigma[ i ];
-            for ( int i = 0  ; i < n_ ; i ++)   sigma_copy[ i ] = sigma[ i ];
-            for (int i = 0 ; i < n_ ; i++) h_acumul_last[ i ] += (sigma[ i ] != i+1);
-        }
-    
-        /*int s = sample - burning_period_samples;
-        if ((s+1) % 1000 == 0 ) {//s+1 permutations
-            acum_time += gen.end_chrono();
-            if ( acum_time >= 1 * 1000 ){
-                if (cont == 0 ) time[cont] = acum_time;
-                else time[cont] = time[cont-1]+ acum_time;
-                acum_time = 0 ;
-                for( int i = 0 ; i < n_ ; i ++ )
-                    h_acumul_all_avg[ i ] = (double)((h_acumul_all_avg[ i ]* ( s_prev ) ) + h_acumul_last[ i ] )/(s+1+s_prev);
-                //cout<<"s_g "<<s<<endl;
-                s_prev += (s+1);
-                sample -= s;
-                expectation_gmm(theta, h_expected);//
-                for( int i = 0 ; i < n_ ; i ++ ) h_acumul_last[ i ] = 0;
-                error[ cont ] = 0;
-                for( int i = 0 ; i < n_ ; i ++ ) error[ cont ] += abs(h_expected[ i ] - h_acumul_all_avg[ i ] );
-                cont++;
-                error[ cont ] = (s+1+s_prev);//all but the last one are overwritte
-            }
-            gen.ini_chrono();
-        }*/
-        if ((sample>=burning_period_samples) && (sample -burning_period_samples+1) % BUCKET_EXP_HAM == 0 ) {
-            int s = sample -burning_period_samples;
-            if (cont == 0 ) time[cont] = gen.end_chrono();
-            else time[cont] = time[cont-1]+ gen.end_chrono();
-            for( int i = 0 ; i < n_ ; i ++ ) h_acumul_all_avg[ i ] = (double)( ( h_acumul_all_avg[ i ]* (s + 1 - BUCKET_EXP_HAM) ) + h_acumul_last[ i ] )/(s+1);
-            expectation(theta, h_expected);
-            for( int i = 0 ; i < n_ ; i ++ ) h_acumul_last[ i ] = 0;
-            error[ cont ] = 0;
-            for( int i = 0 ; i < n_ ; i ++ ) error[ cont ] += abs(h_expected[ i ] - h_acumul_all_avg[ i ] );
-            
-            cont++;
-            gen.ini_chrono();
-        }
-    }
-    delete [] sigma_copy;
-    delete [] h_expected;
-    delete [] h_acumul_last;
-    delete [] h_acumul_all_avg;
-}
 
 double Hamming::probability(int *s, int *s_0, double *theta){
     double  pro = 0;
@@ -454,8 +106,11 @@ void Hamming:: dist_decomp_vector2perm(int* vec, int* sigma){
 
 void Hamming::generate_permu_from_list(int*ran, int dist, int*sigma){
     //the first d items in ran will be deranged. for the rest, sigma[i]=i
+    if ( dist == 0) {
+        for (int i = 0 ; i < n_ ; i++) sigma[i] = i + 1 ;
+        return;
+    }
     int     *deran=new int[n_];
-    if ( dist == 0) {for (int i = 0 ; i < n_ ; i++) sigma[i] = i + 1 ;return;}
     if(dist > 1) random_derangement(dist, deran);
     for( int i = 0; i < dist; i++)
         sigma[ ran[i] - 1 ] = ran  [ deran  [ i ] - 1 ];
@@ -522,7 +177,7 @@ double Hamming::psi_whm(double*theta){
         res += facts_[ n_ - k ] * esp[k];
     }
     delete [] esp;
-    return res * exp( -sum_theta );
+    return (res * exp( -sum_theta ));
 }
 
 double Hamming::psi_hm_reverse(double theta){ // como el de fligner pero las epsilon son lo contrario
@@ -579,10 +234,13 @@ long double Hamming::compute_marginal_iterative(int *h , double * theta, int  ma
     // must be initialized :
     //esp_ini: elementary_symmetric_polynomial( theta, n_ ,..., esp_ini_ );
     //t_sampling_[i]=exp(theta[i]-1
-    int  a = 0 ;//a : |A|; b = |B| is global
-    int  current_var = marginal_order - 1;
-    int  num_vars = n_ - marginal_order;
+    int     a = 0 ;//a : |A|; b = |B| is global
+    long double  result = 0;
+    int     current_var = marginal_order - 1;
+    int     num_vars = n_ - marginal_order;
     long double  res = 0;
+    
+
     if (marginal_order == 1 ){//the first time it is called
         theta_acum_not_in_A = 0;
         b_ = 0 ;
@@ -610,15 +268,15 @@ long double Hamming::compute_marginal_iterative(int *h , double * theta, int  ma
         res +=  g_n_[ n_ -a -k ][ b_ ] * esp_red_[k];
     }
     esp_red_[num_vars]= esp_red_[num_vars] - esp_red_yes_a_[num_vars];
-    res +=  g_n_[n_ -a ][ b_ ] ;//* esp_red_[0]; // iter k=0
+    res +=  g_n_[n_ - a ][ b_ ] ;//* esp_red_[0]; // iter k=0
     if (num_vars != 0)
         res +=  g_n_[n_ -a - num_vars][ b_ ] * esp_red_[num_vars]; // iter k= num_vars
-    double result = exp( - theta_acum_not_in_A + theta[ current_var ] )* res;
-    if ( result < 0 ){
-        //cout<<"Negative marginal probability, maybe theta is too large?"<<endl;
-        return -1;
-        //exit(0);
-    }
+    
+    result = (long double) exp( - theta_acum_not_in_A + theta[ current_var ] )* res;
+    /*if ( result < 0 ){
+        cout<<"Negative marginal probability, maybe theta is too large?"<<endl;
+        exit(0);
+    }*/
     return result;
 }
 
@@ -648,21 +306,25 @@ long double Hamming::compute_marginal(int *h , double * theta ){
 
 
 void Hamming::multistage_sampling(int m, double *theta, int **samples){
-    int     *h = new int[ n_ ];
-    long double  marg, marg_0, marg_1, rand_double = 0 ;
-    long double  marg_ini = psi_whm(theta);
-    for ( int i = 0 ; i < n_ ; i ++ )
-        t_sampling_[ i ] = (long double)exp( theta[ i ]) - 1 ;
     Generic gen;
-    //initialize esp_ini_; 
+    int     *h = new int[ n_ ]; for ( int i = 0 ; i < n_ ; i ++ ) h[ i ] = 0;
+    long double  marg = 0, marg_0 = 0, marg_1 = 0, rand_double = 0 ;
+    long double  marg_ini = 0;
+    
+    for ( int i = 0 ; i < n_ ; i ++ ) t_sampling_[ i ] = (long double) exp( theta[ i ]) - 1 ;
+
+    marg_ini = psi_whm(theta);
+    
+    //initialize esp_ini_;
     gen.elementary_symmetric_polynomial( theta, n_ ,t_, aux_esp_, esp_ini_ );
     for (int s = 0 ; s < m ; s ++) {
         marg = marg_ini;
         for (int items_set = 0 ; items_set < n_; items_set++) {
             h[ items_set ] = 0; //for the marginal computation
-            marg_0 = compute_marginal_iterative(h , theta, items_set + 1);
+            marg_0 = rand_double = 0;
+            marg_0 = compute_marginal_iterative(h , theta, items_set + 1);//8
             marg_1 = marg - marg_0;
-            rand_double = marg * (double)rand() / (RAND_MAX);
+            rand_double = marg * (double)rand() / (RAND_MAX);//2
             if (rand_double < marg_0) {
                 marg = marg_0;
                 h[ items_set ] = 0;
@@ -675,6 +337,7 @@ void Hamming::multistage_sampling(int m, double *theta, int **samples){
         dist_decomp_vector2perm(h , samples[ s ]);
     }
     delete [] h;
+ 
 }
 
 void Hamming::gibbs_sampling(int m, double *theta, int model, int **samples){
@@ -682,6 +345,7 @@ void Hamming::gibbs_sampling(int m, double *theta, int model, int **samples){
     int*sigma = new int[ n_ ];
     Generic  gen;
     gen.generate_random_permutation( n_ , 1, sigma);
+    double ratio = 0 , rand_double = 0 ;
     int h_i = 0, h_j = 0, h_i_new = 0, h_j_new = 0;
     
     for ( int sample = 0 ; sample < m + burning_period_samples ; sample ++){
@@ -695,8 +359,8 @@ void Hamming::gibbs_sampling(int m, double *theta, int model, int **samples){
         h_i_new = (i == sigma[j] - 1) ? 0 : 1 ;
         h_j_new = (j == sigma[i] - 1) ? 0 : 1 ;
         
-        double ratio = exp(- h_j_new * theta[j]) * exp(- h_i_new * theta[i]) / (exp(- h_j * theta[j]) * exp(- h_i * theta[i]));
-        double rand_double = (double)rand()/RAND_MAX;
+        ratio = exp(- h_j_new * theta[j]) * exp(- h_i_new * theta[i]) / (exp(- h_j * theta[j]) * exp(- h_i * theta[i]));
+        rand_double = (double)rand()/RAND_MAX;
         if (rand_double < ratio ) {
             int aux = sigma[i];
             sigma[i] = sigma[j];
@@ -707,6 +371,7 @@ void Hamming::gibbs_sampling(int m, double *theta, int model, int **samples){
             for ( int i = 0  ; i < n_ ; i ++)   samples[ sample - burning_period_samples ][ i ] = sigma[ i ];
         }
     }
+    delete [] sigma;
 }
 
 int Hamming::distance_to_sample(int **samples, int m, int *sigma){
@@ -745,6 +410,142 @@ void Hamming::estimate_consensus_exact_mm(int m, int**samples, int*sigma){
     delete [] freq;
 }
 
+/*double Hamming::estimate_consensus_exact_gmm_core(int m, int **freq ,int * max_index_in_col, double * h_avg, int *sigma_0, int*sigma_0_inv, int pos, double previous_likelihood, double *best_likelihood, int *best_sigma_0){
+    Generic gen;
+    //TODO mejorar la cota pal resto
+    long double nodes = 1;
+    if ( pos == n_ && ( *best_likelihood < previous_likelihood || *best_likelihood == 0) ) {
+        cout<<"leafBEST: lik, bestL "<<previous_likelihood<<" "<<*best_likelihood<<endl;
+        *best_likelihood = previous_likelihood;
+        for (int i = 0 ; i < n_ ; i++) best_sigma_0[ i ] = sigma_0[ i ];
+        //for (int i = 0 ; i < n_ ; i++) cout<< sigma_0_inv[ i ]<<" ";cout<<"sigma_o"<<endl;
+
+    }else{
+        Newton_raphson nr(n_);
+        long double  likelihood, a1;
+        int     * max_index_in_col_bounded = new int[ n_ ];
+        double  * theta = new double[ n_ ];
+        double  * h_avg_bounded = new double [n_ ];
+        for (int item = 0 ; item < n_ ; item ++){
+            if (sigma_0[ item ] == -1 ) {//
+                sigma_0_inv[ pos ] = item + FIRST_ITEM;
+                sigma_0[ item ] = pos + FIRST_ITEM;
+                if(sigma_0[0]==2&&sigma_0[1]==1&&sigma_0[2]==3&&sigma_0[3]==4){
+                    bool traza = true;
+                }
+                bound_consensus (m, pos, freq, sigma_0, sigma_0_inv, h_avg, max_index_in_col, h_avg_bounded, max_index_in_col_bounded);
+                nr.mle_theta_weighted_mallows_hamming( m , h_avg_bounded, theta);
+                a1 = 0 ;
+                for ( int i = 0 ; i < n_ ; i++) a1 += h_avg_bounded[ i ] * theta[ i ] ;
+                likelihood = (long double)-m * (a1 + (long double)log (psi_whm(theta)));
+                if ((previous_likelihood < likelihood) && abs(previous_likelihood - likelihood)>0.0001 && previous_likelihood != 0 ){
+                    cout<<"ERROR likeli must decrease down tree "<<pos<<" "<<previous_likelihood<<" "<<likelihood<<" "<<previous_likelihood - likelihood<<" "<<*best_likelihood<<endl;
+                }
+     //           if (likelihood >= *best_likelihood || *best_likelihood == 0 ){
+                cout<<"  ";gen.print_int_vector(sigma_0_inv, n_);cout<<"\t\t"<<likelihood<<"\n";
+                cout<<"\t\t";gen.print_double_vector(h_avg_bounded, n_);
+                cout<<"\t\t";gen.print_double_vector(theta, n_);
+                 
+                    nodes += estimate_consensus_exact_gmm_core(m, freq, max_index_in_col_bounded, h_avg_bounded,sigma_0, sigma_0_inv, pos + 1,likelihood, best_likelihood, best_sigma_0);
+       //         }else {
+                  //  cout<<"x ";gen.print_int_vector(sigma_0_inv, n_);cout<<"\t\t"<<likelihood<<"\n";
+                  //  cout<<"\t\t";gen.print_double_vector(h_avg, n_);
+       //         }
+                sigma_0_inv[ pos ] = -1;
+                sigma_0[ item ] = -1;
+                //h_avg[ pos ] = h_min[ pos ];
+            }
+        }
+        delete [] h_avg_bounded;
+        delete [] theta;
+        delete [] max_index_in_col_bounded;
+    }
+    return nodes;
+}
+
+void Hamming::bound_consensus(int m, int pos, int **freq, int *sigma_0, int *sigma_0_inv, double *h_avg, int *max_index_in_col, double *h_avg_bounded, int *max_index_in_col_bounded){
+    for (int i = 0 ; i < pos ; i++) {
+        h_avg_bounded [ i ] =  h_avg[ i ];
+        max_index_in_col_bounded[ i ] = 0;
+    }
+    h_avg_bounded[ pos ] = (double) 1 - (double) freq[ sigma_0_inv[ pos ] - FIRST_ITEM ][ pos ] / m;
+    for (int col = pos+1 ; col < n_ ; col++) {//h_avg_bounded [ i ] =  h_avg[ i ];
+        if (max_index_in_col[ col ] != sigma_0_inv[ pos ]) 
+            max_index_in_col_bounded[ col ] = max_index_in_col[ col ];
+         else{
+                max_index_in_col_bounded[ col ] = -1;
+                for (int row = 0 ; row < n_ ; row++ ){
+                    if ( sigma_0[ row ] == -1 && ( max_index_in_col_bounded[ col ] == -1 || freq[ row ][ col ] > freq[max_index_in_col_bounded[ col ]][ col ] ))
+                        max_index_in_col_bounded[ col ] = row;
+                }
+            }
+        h_avg_bounded[ col ] = (double) 1 - (double) freq[ max_index_in_col[ col ] ] [ col ]/ m;
+        
+    }
+    for (int i = 0 ; i < n_ ; i++)
+        if (h_avg_bounded[ i ] < h_avg[ i ]){//trace
+            cout<<"ERROR: h_avg must increase down tree"<<endl;
+            Generic gen;
+            gen.print_int_vector(sigma_0, n_);
+            gen.print_int_vector(sigma_0_inv, n_);
+            gen.print_double_vector(h_avg, n_);
+            gen.print_double_vector(h_avg_bounded , n_);
+            gen.print_int_vector(max_index_in_col, n_);
+            gen.print_int_vector(max_index_in_col_bounded, n_);
+        }
+}
+
+double Hamming::estimate_consensus_exact_gmm(int m, int **samples, int*sigma_0_ini, int *sigma_0){
+    //return num_nodes
+    Generic gen;
+    int     ** freq             = new int * [ n_ ];
+    int     *  max_index_in_col = new int [ n_ ];
+    int     *  sigma_0_inv      = new int[ n_ ];
+    int     *  sigma_0_iter     = new int[ n_ ];
+    double  *  h_avg            = new double[ n_ ];
+    double  likelihood = 0 ;
+    for (int i = 0 ; i < n_ ; i++) {
+        sigma_0[ i ] = sigma_0_inv[ i ] = sigma_0_iter[ i ] = -1;
+        max_index_in_col[ i ] = -1 ;
+        freq[ i ] = new int [ n_ ]; for (int j = 0 ; j < n_ ; j ++) freq[ i ][ j ] = 0 ;
+    }
+    
+    for (int s = 0 ; s < m ; s ++)
+        for (int j = 0 ; j < n_ ; j ++)
+            freq[ j ][ samples[ s ][ j ] - 1 ]++;
+    //gen.print_int_matrix(freq, n_, n_);
+    for (int j = 0 ; j < n_ ; j++)
+        for (int i = 0 ; i < n_ ; i ++)
+            if (  max_index_in_col[ j ] == -1 || freq[ i ][ j ] > freq[  max_index_in_col[ j ] ][ j ]  )
+                max_index_in_col[ j ] = i;
+    for (int j = 0 ; j < n_ ; j++){
+        h_avg[ j ] = (double ) 1.0 - (double) freq[ max_index_in_col[ j ]][ j ] / m;
+    }
+    
+    //obtain the likelihod of the approx solution
+    estimate_consensus_approx_gmm(m, samples, sigma_0, &likelihood);
+
+    if ( sigma_0_ini != NULL ){
+        //obtain the likelihod of the proposed sigma_0_ini.
+        double like_ini = get_likelihood(m , samples , GENERALIZED_MALLOWS_MODEL , sigma_0_ini);
+        //check both solutions: the proposed sigma_0_ini vs. the approx. Discard the worse
+        if (like_ini > likelihood) {
+            likelihood = like_ini;
+            for (int i = 0 ; i < n_ ; i++) sigma_0[ i ] = sigma_0_ini[ i ];
+        }
+    }
+    
+    double nodes = estimate_consensus_exact_gmm_core(m, freq, max_index_in_col, h_avg, sigma_0_iter, sigma_0_inv, 0,0, &likelihood, sigma_0);
+    //cout<<"num_nodes "<<nodes<<endl;
+    
+    for (int i = 0 ; i < n_ ; i++) delete [] freq[ i ];
+    delete [] freq;
+    delete [] max_index_in_col;
+    delete [] sigma_0_inv;
+    delete [] sigma_0_iter;
+    delete [] h_avg;
+    return nodes;
+}*/
 
 double Hamming::expectation(double theta){
     double x_n = 0 , x_n_1 = 0, aux = 0 ;

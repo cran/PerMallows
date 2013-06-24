@@ -115,15 +115,15 @@ int Ulam::gen_part_next(unsigned char *vector, unsigned char *k, int bound){
     int        temp;  //auxiliary element
     
     //easy case
-    if(vector[j] == 2){
+    if(j >= 0 && vector[j] == 2){
         vector[j] = 1;
         j--;
         (*k)++;
         //terminate if the num of columns is smaller than 'bound'
-        if ((int)vector[0] < bound){
+        /*if ((int)vector[0] < bound){
             j=0;
             return (GEN_TERM);
-        }
+        }*/
         return(GEN_NEXT);
     }
     //terminate if all parts are 1
@@ -148,10 +148,10 @@ int Ulam::gen_part_next(unsigned char *vector, unsigned char *k, int bound){
         vector[j] = r;
     }
     //terminate if the num of columns is smaller than 'bound'
-    if ((int)vector[0] < bound){
+    /*if ((int)vector[0] < bound){
         j=0;
         return (GEN_TERM);
-    }
+    }*/
     return(GEN_NEXT);
 }
 
@@ -276,12 +276,13 @@ void Ulam::fill_shapes_of_n(){
         int           part_len;
         
         //alloc memory for vector
-        vector = (unsigned char *)malloc(sizeof(unsigned char) * n_ );
+        /*vector = (unsigned char *)malloc(sizeof(unsigned char) * n_ );
         if(vector == NULL)    {
             //fprintf(stderr, "error: insufficient memory\n");
             //exit(EXIT_FAILURE);
             return;
-        }
+        }*/
+        vector = new unsigned char [ n_ ];
         Ferrers_diagram*f;
         gen_result = gen_part_init(vector, n_, &k);
         while(gen_result == GEN_NEXT ) {//&& (int)vector[0] >= bound
@@ -306,7 +307,8 @@ void Ulam::fill_shapes_of_n(){
             cont ++;
             gen_result = gen_part_next(vector, &k, 0);
         }
-        free(vector);
+        //free(vector);
+        delete [] vector;
     }
 }
 

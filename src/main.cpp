@@ -63,20 +63,8 @@ Exponential_model * exp_mod_;
 int main(int argc, const char * argv[])
 { 
     Generic gen;
-    //cout<<"NO SEED"<<endl;
     gen.seed();
-   
     //loop_menu();
-    
-    return 0;
-
-    
-    //Stats_Cayley te;
-    //char path[200] ;// = "/Users/eki/Dropbox/permus/prj/dataset/PrefLib/soc/ED-00004-00000012.soc";;
-    //strcpy (path , argv[1]);//te.test_theta_meaning(path);
-    //te.list_dataset();//no va
-    //te.apa_test();
-    
     return 0;
 }
 /**********************     GENERAL      *************************/
@@ -575,54 +563,6 @@ void op_19(){
     op_8();
 }
 
-
-///*****************    AUXILIAR TO TEST U.A.R. ***************/
-/* 
-int**perms;
-int test_len;
-int*c;
-int test_n ;
-void init_test_uar(int len, int n_){
-    test_len=len+3;
-    test_n = n_;
-    perms = new int*[test_len];
-    c=new int[test_len];
-    for(int i=0;i<test_len;i++)c[i]=0;
-    for(int i=0;i<test_len;i++)perms[i]=new int[n_];
-    for(int i=0;i<test_len;i++)for(int j=0;j<n_;j++) perms[i][j]=-1;
-}
-bool is_equal_to(int*s1, int*s2){
-    for(int i=0;i<test_n;i++)
-        if(s1[i] != s2[i])return false;
-    return true;
-}
-int getIndex(int**matrix, int*sigma){
-    for(int i=0;i<test_len;i++){
-        if(is_equal_to(matrix[i], sigma))return i;
-        if(matrix[i][0]==-1){
-            for(int j=0;j<test_n;j++)matrix[i][j]=sigma[j];
-            return i;
-        }
-    }
-    return -1;
-}
-
-void test_uar(int*sigma){
-    int in = getIndex(perms, sigma);
-    c[in]++;
-}
-void test_uar_end(int dist){
-    Generic gen;
-    cout<<"vector "<<endl;
-    for(int i=0;i<test_len;i++){
-        
-        cout<<c[i]<<"  x  ";
-        gen.print_int_vector(perms[i], test_n);
-        
-    }
-    cout<<"If there are not 3 empty .. error!!!"<<endl;
-    
-}
 
 
 

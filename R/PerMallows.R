@@ -12,17 +12,21 @@
 #         University of the Basque Country
 # -----------------------------------------
 
-
-
 ###################   GENERAL   ###################
 
-#' Generate every permutation 
+.CAYLEY.DISTANCE <- 0
+.KENDALL.DISTANCE <- 1
+.HAMMING.DISTANCE <- 2
+.ULAM.DISTANCE <- 3
+
+#' Generate every permutation of perm.length item
 #' 
-#' Generate every permutation of the specified number of items
+#' This functions returns a matrix in thich each of rows
+#' is a different permutation of the specified number of items
 #'
 #' @param perm.length number of items in the permutation
 #' @param alert optional ask for confirmation when the number of permtuations to show is very large
-#' @return collection of every permutation of the specified number of items
+#' @return A collection of every permutation of the specified number of items
 #' @export
 #' @examples
 #' permutations.of(3)
@@ -55,7 +59,7 @@ permutations.of <- function(perm.length, alert=TRUE){
 #' This function generates the identity permutation of a given number of items
 #'
 #' @param perm.length number of items in the permutation
-#' @return the identity permutation of the specified number of items
+#' @return The identity permutation of the specified number of items
 #' @export
 #' @examples
 #' identity.permutation(3)
@@ -66,10 +70,11 @@ identity.permutation<-function(perm.length){
 
 #' Generate inverse permutation
 #'
-#' This function generate inverse of a given permutation
+#' This function generates the inverse of a given permutation. If the input 
+#' is a matrix of permutations, invert all the permutations in the input. 
 #'
 #' @param perm a permutation or matrix of permutations
-#' @return if the input was a permutation, the inverse permutation. 
+#' @return The inverse permutation. 
 #' If the input is a matrix,the matrix with the inverses
 #' @export
 #' @examples
@@ -89,13 +94,13 @@ inverse.permutation <- function(perm){
 #' Compose permutations
 #'
 #' This function composes two given permtuations. One of the arguments 
-#' can be a collection of permutations, but not both at a time. In this 
+#' can be a collection of permutations, but not both at the same time. In this 
 #' case, every permutation in the collection is composed with the 
 #' other argument
 #'
 #' @param perm1 a permtuation or a collection of permutations
 #' @param perm2 a permtuation or a collection of permutations
-#' @return the composition of the permutations
+#' @return The composition of the permutations
 #' @export
 #' @examples
 #' compose(c(3,1,2,4), c(4,1,3,2))
@@ -150,10 +155,10 @@ is.permutation <- function(perm){
 #' checks if each row is a proper permutation
 #'
 #' @param path string with a path
-#' @return collection of permutations in matrix form
+#' @return A collection of permutations in matrix form
 #' @export
 #' @examples
-#' path = system.file("test.txt", package='PerMallows')
+#' path = system.file("test.txt", package="PerMallows")
 #' sample = read.permutation.file(path)
 read.permutation.file <- function(path){
   sample = as.matrix( read.table(path, sep=" "))
@@ -168,7 +173,7 @@ read.permutation.file <- function(path){
 #' a permutation
 #'
 #' @param ratings a matrix in which each row is a vector of ratings of several items
-#' @return a matrix in which each row is the correspondibg permutation of the items
+#' @return A matrix in which each row is the corresponding permutation of the items
 #' @export
 #' @examples
 #' order.ratings(c(0.1, 4, 0.5, -4))
@@ -184,8 +189,8 @@ order.ratings <- function(ratings){
 #'
 #' @param n optional number of permutations to generate
 #' @param perm.length length of the permutations generated
-#' @return a single permutation or a matrix with n rows, each being a permutation. Every permutation 
-#' is drawn uniformly at random and has length perm.length
+#' @return A single permutation or a matrix with n rows, each being a permutation. 
+#' Every permutation is drawn uniformly at random and has length perm.length
 #' @export
 #' @examples
 #' runif.permutation(1,5)
@@ -204,7 +209,7 @@ runif.permutation <- function(n=1 , perm.length){
 #' permutation, calculate the proportion of them that have each item in each position
 #'
 #' @param perm a permutation or a collection of them
-#' @return a matrix with n rows and n columns with the proportion of the permutations 
+#' @return A matrix with n rows and n columns with the proportion of the permutations 
 #' in the input that have each item in each position
 #' @export
 #' @examples
@@ -227,10 +232,6 @@ freq.matrix <- function(perm){
   return (mat)
 }
 
-.CAYLEY.DISTANCE <- 0
-.KENDALL.DISTANCE <- 1
-.HAMMING.DISTANCE <- 2
-.ULAM.DISTANCE <- 3
 ###################   PROBABILITY DISTRIBUTIONS   ###################
 
 #' Compute the marginal probability, GMM under the Hamming distance
@@ -241,7 +242,7 @@ freq.matrix <- function(perm){
 #' @param h n dimensional distance decomposition vector where h_j = 0 means that $j$ is a fixed point, 
 #' h_j = 1 means that $j$ is an unfixed point and otherwise $j$ is not known
 #' @param theta n dimensional distance decomposition vector with the dispersion parameters
-#' @return marginal probability
+#' @return The marginal probability
 #' @export
 #' @examples
 #' marginal(c(1,0,1,-1,-1), c(0.1, 0.3, 0.7, 0.1, 1))
@@ -250,7 +251,7 @@ marginal <- function(h, theta){
   if (length(h) != length(theta))
     stop("Check the length of the h and theta vectors")
   res <- 0
-  res<-.C("marginals", as.integer(length(h)), as.integer(.check.distance.name('hamming')), as.integer(h),
+  res<-.C("marginals", as.integer(length(h)), as.integer(.check.distance.name("hamming")), as.integer(h),
           as.numeric(theta), as.double(res))[5]
   return (res[[1]]) 
 }
@@ -262,12 +263,14 @@ marginal <- function(h, theta){
 #' @param theta real dispersion parameter
 #' @param perm.length length of the permutation in the considered model
 #' @param dist.name optional name of the distance used in the MM. One of: kendall (default), cayley, hamming, ulam
-#' @return expected distance
+#' @return The expected distance under the MM
 #' @export
 #' @examples
-#' expectation.mm(2,4,'hamming')
-#' expectation.mm(1, 6,'ulam')
-expectation.mm <- function(theta, perm.length,  dist.name='kendall'){
+#' expectation.mm( 1, 7, "kendall" )
+#' expectation.mm( 2, 5, "cayley" )
+#' expectation.mm( 2, 4, "hamming" )
+#' expectation.mm( 1, 6, "ulam" )
+expectation.mm <- function(theta, perm.length,  dist.name="kendall"){
   dist_id = .check.distance.name(dist.name, FALSE)
   expec <- rep(0,perm.length)
   expec<-.C("expectation",  as.integer(dist_id), as.integer(0), as.integer(perm.length), 
@@ -280,13 +283,14 @@ expectation.mm <- function(theta, perm.length,  dist.name='kendall'){
 #' Compute the expected distance in the GMM under the Hamming distance
 #'
 #' @param theta n dimensional real vector with the dispersion parameters
-#' @return expected distance decomposition vector
+#' @return The expected distance decomposition vector under the GMM
 #' @param dist.name optional name of the distance used in the GMM. One of: kendall (default), cayley, hamming
 #' @export
 #' @examples
 #' expectation.gmm(c(0.38, 0.44, 0.1, 0.2, 1, 0.1))
-#' expectation.gmm(c(2,2,2,2),'hamming')
-expectation.gmm <- function (theta, dist.name='kendall'){
+#' expectation.gmm(c(2, 2, 2, 2),"cayley")
+#' expectation.gmm(c(0.3, 0.1, 0.5, 0.1),"hamming")
+expectation.gmm <- function (theta, dist.name="kendall"){
   dist_id = .check.distance.name(dist.name, TRUE)
   if ( dist_id == .HAMMING.DISTANCE )  perm.length <- length(theta) 
   else  perm.length <- length(theta) + 1
@@ -300,10 +304,10 @@ expectation.gmm <- function (theta, dist.name='kendall'){
   if ( for.gmm ) err.msg = "Choose one of these distances: Cayley, Kendall, Hamming"
   else err.msg = "Choose one of these distances: Cayley, Kendall, Hamming, Ulam"
   
-  if      (dist.name == 'cayley'  || dist.name == 'Cayley')  dist_id = .CAYLEY.DISTANCE
-  else if (dist.name == 'Kendall' || dist.name == 'kendall') dist_id = .KENDALL.DISTANCE
-  else if (dist.name == 'Hamming' || dist.name == 'hamming') dist_id = .HAMMING.DISTANCE
-  else if (dist.name == 'Ulam'    || dist.name == 'ulam' &&  !for.gmm )    dist_id = .ULAM.DISTANCE
+  if      (dist.name == "cayley"  || dist.name == "Cayley")  dist_id = .CAYLEY.DISTANCE
+  else if (dist.name == "Kendall" || dist.name == "kendall") dist_id = .KENDALL.DISTANCE
+  else if (dist.name == "Hamming" || dist.name == "hamming") dist_id = .HAMMING.DISTANCE
+  else if (dist.name == "Ulam"    || dist.name == "ulam" &&  !for.gmm )    dist_id = .ULAM.DISTANCE
   else stop(err.msg)
   return (dist_id)
 }
@@ -327,15 +331,19 @@ expectation.gmm <- function (theta, dist.name='kendall'){
 #' @param sigma0 optional central permuation of the MM, by default the identity
 #' @param theta dispersion parameter of the MM
 #' @param dist.name optional name of the distance used in the MM. One of: kendall (default), cayley, hamming, ulam
-#' @return the probability of sigma in the given MM
+#' @return The probability of sigma in the given MM
 #' @examples
 #' sample <- matrix(c(1,2,3, 4,1,4,3,2,1,2,4,3), nrow = 3, ncol = 4, byrow = TRUE)
 #' sig<-c(1,2,3,4)
-#' log.prob <- apply(sample,MARGIN=1,FUN=function(x){log(dmm(x,sig, 1,'cayley'))})
+#' log.prob <- apply(sample,MARGIN=1,FUN=function(x){log(dmm(x,sig, 1,"cayley"))})
 #' sum(log.prob)
+#' dmm(c(1,3,2,4), theta=0.1)
+#' dmm(c(1,3,2,4), theta=0.1, dist.name="cayley")
+#' dmm(c(1,3,2,4), theta=0.1, dist.name="hamming")
+#' dmm(c(1,3,2,4), theta=0.1, dist.name="ulam")
 #' @export
-dmm <- function(perm, sigma0=identity.permutation(length(perm)), theta, dist.name='kendall'){
-  if (!is.permutation(perm) || ! is.permutation(sigma0))
+dmm <- function(perm, sigma0=identity.permutation(length(perm)), theta, dist.name="kendall"){
+if (!is.permutation(perm) || ! is.permutation(sigma0))
     stop("Check parameters")
   dist_id       = .check.distance.name(dist.name)
   if( length(theta) == 1 ) theta = rep( theta, length(perm)  )
@@ -352,15 +360,17 @@ dmm <- function(perm, sigma0=identity.permutation(length(perm)), theta, dist.nam
 #' @param sigma0 central permuation of the GMM, by default the identity
 #' @param theta vector dispersion parameter of the GMM
 #' @param dist.name optional name of the distance used in the GMM. One of: kendall (default), cayley, hamming
-#' @return the probability of sigma in the given GMM
+#' @return The probability of sigma in the given GMM
 #' @examples
-#' sample <- matrix(c(1,2,3, 4,1,4,3,2,1,2,4,3), nrow = 3, ncol = 4, byrow = TRUE)
+#' sample <- matrix(c(1,2,3,4, 1,4,3,2, 1,2,4,3), nrow = 3, ncol = 4, byrow = TRUE)
 #' sig <- c(1,2,3,4)
 #' th <- c(0.1, 0.2, 0.3,1)
-#' log.prob <- apply(sample,MARGIN=1,FUN=function(x){log(dgmm(x,sig, th, 'hamming'))})
+#' log.prob <- apply(sample,MARGIN=1,FUN=function(x){log(dgmm(x,sig, th, "hamming"))})
 #' sum(log.prob)
+#' dgmm (c(1,2,3,4), theta=c(1,1,1))
+#' dgmm (c(1,2,3,4), theta=c(1,1,1), dist.name="cayley")
 #' @export
-dgmm <- function(perm, sigma0=identity.permutation(length(perm)), theta, dist.name='kendall'){
+dgmm <- function(perm, sigma0=identity.permutation(length(perm)), theta, dist.name="kendall"){
   if (!is.permutation(perm) || ! is.permutation(sigma0))
     stop("Check parameters")
   dist_id       = .check.distance.name(dist.name, TRUE)
@@ -388,11 +398,16 @@ dgmm <- function(perm, sigma0=identity.permutation(length(perm)), theta, dist.na
 #' @param sampling.method optional name of the sampling algorithm. One of: distances, multistage, gibbs (default)
 #' @param disk optional can only be true if using the Distances sampling algorithm for generating under the Ulam distance.
 #' Insted of generating the whole set of SYT and count of permutations per distance, it loads the info from a file in the disk
-#' @return a sample of permutations from the specified ditribution
+#' @return A matrix contaning a sample of permutations from the specified ditribution
 #' @export
 #' @examples
-#' rmm(2,c(1,2,3,4,5),1,'ulam', 'distances')
-rmm <- function(n, sigma0, theta, dist.name='kendall', sampling.method='distances', disk=FALSE){
+#' rmm(2,c(1,2,3,4,5),1,"kendall", "distances")
+#' rmm(2,c(1,2,3,4,5),1,"cayley", "distances")
+#' rmm(2,c(1,2,3,4,5),1,"hamming", "distances")
+#' rmm(2,c(1,2,3,4,5),1,"ulam", "distances")
+#' rmm(2,c(1,2,3,4,5),1,"kendall", "multistage")
+#' rmm(2,c(1,2,3,4,5),1,"cayley", "multistage")
+rmm <- function(n, sigma0, theta, dist.name="kendall", sampling.method="distances", disk=FALSE){
   if (! is.permutation(sigma0))
     stop("Check parameters")
   num.perms <- n
@@ -400,9 +415,9 @@ rmm <- function(n, sigma0, theta, dist.name='kendall', sampling.method='distance
   if(length(theta) != 1 ) stop("Theta must be one real number") 
   dist_id       = .check.distance.name(dist.name)
   
-  if      ( sampling.method == 'Distances'  || sampling.method == 'distances')  algorithm_id = 0
-  else if ( sampling.method == 'Multistage' || sampling.method == 'multistage') algorithm_id = 1
-  else if ( sampling.method == 'Gibbs'      || sampling.method == 'gibbs')      algorithm_id = 2
+  if      ( sampling.method == "distances"  || sampling.method == "distances")  algorithm_id = 0
+  else if ( sampling.method == "multistage" || sampling.method == "multistage") algorithm_id = 1
+  else if ( sampling.method == "gibbs"      || sampling.method == "gibbs")      algorithm_id = 2
   else stop("Choose one of these sampling.method: distances, multistage, gibbs")
 
   if ( disk ){
@@ -415,7 +430,7 @@ rmm <- function(n, sigma0, theta, dist.name='kendall', sampling.method='distance
   }
   
   if( dist_id == 3 && algorithm_id != 0 ) 
-    stop ("No Gibbs or multistage algorithm for the Ulam distance, choose 'distances'")
+    stop ("No Gibbs or multistage algorithm for the Ulam distance, choose distances")
   
   if (algorithm_id == 0)
     sam <- .Call("distances_sampling", dist_id, perm.length, num.perms, theta)
@@ -437,11 +452,15 @@ rmm <- function(n, sigma0, theta, dist.name='kendall', sampling.method='distance
 #' @param theta dispersion parameter vector of the GMM
 #' @param dist.name optional used name of the distance used in the GMM. One of: kendall (default), cayley, hamming
 #' @param sampling.method optional name of the sampling algorithm. One of: multistage, gibbs (default)
-#' @return a sample of permutations from the specified ditribution
+#' @return A matrix contaning a sample of permutations from the specified ditribution
 #' @export
 #' @examples
-#' rgmm(2,c(1,2,3,4,5),c(1,1,1,1,1),'hamming')
-rgmm <- function(n, sigma0, theta, dist.name='kendall', sampling.method='gibbs'){
+#' rgmm(2,c(1,2,3,4,5),c(1,1,1,1),"kendall", "multistage")
+#' rgmm(2,c(1,2,3,4,5),c(1,1,1,1),"cayley", "multistage")
+#' rgmm(2,c(1,2,3,4,5),c(1,1,1,1,1),"hamming", "multistage")
+#' rgmm(2,c(1,2,3,4,5),c(1,1,1,1),"cayley", "gibbs")
+#' rgmm(2,c(1,2,3,4,5),c(1,1,1,1,1),"hamming", "gibbs")
+rgmm <- function(n, sigma0, theta, dist.name="kendall", sampling.method="gibbs"){
   if (! is.permutation(sigma0))
     stop("Check parameters")
   num.perms <- n
@@ -451,8 +470,8 @@ rgmm <- function(n, sigma0, theta, dist.name='kendall', sampling.method='gibbs')
   dist_id       = .check.distance.name(dist.name, TRUE)
   mallows.model = .check.theta.length.gmm(dist_id, theta.length, perm.length)
   
-  if ( sampling.method == 'Multistage' || sampling.method == 'multistage')  algorithm_id = 1
-  else if ( sampling.method == 'Gibbs'      || sampling.method == 'gibbs')  algorithm_id = 2
+  if ( sampling.method == "multistage" || sampling.method == "multistage")  algorithm_id = 1
+  else if ( sampling.method == "gibbs"      || sampling.method == "gibbs")  algorithm_id = 2
   else stop("Choose one of these sampling.method: Multistage, Gibbs")
   
   sam <- .Call("sampling_multi_gibbs_cayley",dist_id, perm.length, num.perms, theta, 1, algorithm_id);
@@ -473,21 +492,25 @@ rgmm <- function(n, sigma0, theta, dist.name='kendall', sampling.method='gibbs')
 #' @param estimation optional select the approximated or the exact. One of: approx, exact
 #' @param disk optional can only be true if estimating a MM under the Ulam distance.
 #' Insted of generating the whole set of SYT and count of permutations per distance, it loads the info from a file in the disk
-#' @return a list with the parameters of the estimated distribution: the
+#' @return A list with the parameters of the estimated distribution: the
 #' mode and the dispersion parameter
 #' @export
 #' @examples
 #' sample <- matrix(c(1,2,3,4, 1,4,3,2, 1,2,4,3), nrow = 3, ncol = 4, byrow = TRUE)
-#' lmm(sample, dist.name='ulam', estimation='approx')
-lmm <- function(sample, sigma_0_ini =identity.permutation(dim(sample)[2]), dist.name='kendall', estimation='approx', disk=FALSE){
+#' lmm(sample, dist.name="kendall", estimation="approx")
+#' lmm(sample, dist.name="cayley", estimation="approx")
+#' lmm(sample, dist.name="cayley", estimation="exact")
+#' lmm(sample, dist.name="hamming", estimation="exact")
+#' lmm(sample, dist.name="ulam", estimation="approx")
+lmm <- function(sample, sigma_0_ini =identity.permutation(dim(sample)[2]), dist.name="kendall", estimation="approx", disk=FALSE){
   if (! is.permutation(sample))
     stop("Check parameters")
   num.perms <- dim(sample)[1]
   perm.length <- dim(sample)[2]
   dist_id = .check.distance.name(dist.name)
   
-  if(estimation == 'Exact' || estimation == 'exact') estim_var = 0
-  else if(estimation == 'Approx' || estimation == 'approx') estim_var = 1
+  if(estimation == "Exact" || estimation == "exact") estim_var = 0
+  else if(estimation == "Approx" || estimation == "approx") estim_var = 1
   else stop("Choose one of these estimations: approx, exact")
   
   if ( disk ){
@@ -499,9 +522,9 @@ lmm <- function(sample, sigma_0_ini =identity.permutation(dim(sample)[2]), dist.
     else stop ("Estimation form disk can only be used with Ulam distance")
   }
   
-  if (estim_var == 0 && (dist_id == 1 || dist_id == 3)) 
-    stop ("No exact learning for Kendall or Ulam distances")
-  if( estim_var == 1 && dist_id == 2 ) stop ("No approx learning for Hamming")
+  if (estim_var == 1 && dist_id == .HAMMING.DISTANCE ) stop ("No approx learning for the Hamming MM, try exact")
+  if (estim_var == 0 && (dist_id != .CAYLEY.DISTANCE && dist_id != .HAMMING.DISTANCE) ) 
+    stop ("Exact learning only for cayley and Hamming")
   sigma0 <- .Call("consensus", dist_id, sample, 0, estim_var, sigma_0_ini)  
   
   the <- .Call("estimate_theta", dist_id, perm.length, num.perms, sigma0, sample, 0)
@@ -517,25 +540,28 @@ lmm <- function(sample, sigma_0_ini =identity.permutation(dim(sample)[2]), dist.
 #' @param sigma_0_ini optional the initial guess for the consensus permutation
 #' @param dist.name optional name of the distance used by the GMM. One of: kendall (default), cayley, hamming
 #' @param estimation optional select the approximated or the exact. One of: approx, exact
-#' @return a list with the parameters of the estimated distribution: the
+#' @return A list with the parameters of the estimated distribution: the
 #' mode and the dispersion parameter vector
 #' @export
 #' @examples
 #' sample <- matrix(c(1,2,3,4, 1,4,3,2, 1,2,4,3), nrow = 3, ncol = 4, byrow = TRUE)
-#' lgmm(sample, dist.name='cayley', estimation='approx')
-lgmm <- function(sample, sigma_0_ini =identity.permutation(dim(sample)[2]), dist.name='kendall', estimation='approx'){
+#' lgmm(sample, dist.name="kendall", estimation="approx")
+#' lgmm(sample, dist.name="cayley", estimation="approx")
+#' lgmm(sample, dist.name="cayley", estimation="exact")
+#' lgmm(sample, dist.name="hamming", estimation="approx")
+lgmm <- function(sample, sigma_0_ini =identity.permutation(dim(sample)[2]), dist.name="kendall", estimation="approx"){
   if (! is.permutation(sample))
     stop("Check parameters")
   num.perms <- dim(sample)[1]
   perm.length <- dim(sample)[2]
   dist_id = .check.distance.name(dist.name , TRUE)
   
-  if(estimation == 'Exact' || estimation == 'exact') estim_var = 0
-  else if(estimation == 'Approx' || estimation == 'approx') estim_var = 1
+  if(estimation == "Exact" || estimation == "exact") estim_var = 0
+  else if(estimation == "Approx" || estimation == "approx") estim_var = 1
   else stop("Choose one of these estimations: approx, exact")
   
-  if (estim_var == 0 && dist_id == 1) 
-    stop ("No exact learning for Kendall distance")
+  if (estim_var == 0 && dist_id != .CAYLEY.DISTANCE ) 
+    stop ("Exact leraning only for Cayley")
   sigma0 <- .Call("consensus", dist_id, sample, 1, estim_var, sigma_0_ini)
   the <- .Call("estimate_theta", dist_id, perm.length, num.perms, sigma0, sample, 1)
   if ( dist_id == 2 ) theta.len = perm.length
@@ -550,7 +576,7 @@ lgmm <- function(sample, sigma_0_ini =identity.permutation(dim(sample)[2]), dist
 #' are going to be computted more than once
 #'
 #' @param perm.length number of items in the permutations
-#' @return writes in the current folder the axiliary files
+#' @return Nothing. Only writes in the current folder the axiliary files
 #' @export
 #' @examples
 #' generate.aux.files(4)
@@ -568,7 +594,7 @@ generate.aux.files <- function(perm.length){
 #' @param perm a permutation
 #' @param i position of the permutation
 #' @param j position of the permutation
-#' @return the permutation in the input in which the two speicfied items have been swapped
+#' @return The permutation in the input in which the two speicfied items have been swapped
 #' @export
 #' @examples
 #' swap(c(1,2,3,4,5),2,5)
@@ -588,7 +614,7 @@ swap <- function(perm, i, j){
 #'
 #' @param perm a permutation
 #' @param i position of the permutation
-#' @return the permutation in the input with an inversion at the specified position
+#' @return The permutation in the input with an inversion at the specified position
 #' @export
 #' @examples
 #' inversion.at(c(1,2,3,4,5),2)
@@ -608,7 +634,7 @@ inversion.at <- function(perm, i){
 #' @param perm a permutation
 #' @param i position of the permutation
 #' @param j position of the permutation
-#' @return the permutation in the input in which th eoperation has been applied
+#' @return The permutation in the input in which th eoperation has been applied
 #' @export
 #' @examples
 #' insert.at(c(1,2,3,4,5),5,2)
@@ -634,7 +660,7 @@ insert.at <- function(perm, i, j){
 #' Factor a given a permutation in the set of independent cycles
 #'
 #' @param perm a permutation
-#' @return the permutation in the input in which the operation has been applied
+#' @return The permutation in the input in which the operation has been applied
 #' @export
 #' @examples
 #' permutation2cycles(c(1,5,2,3,4))
@@ -687,7 +713,7 @@ cycle2str <- function(cy){
 #' Get the permutation as a vector given the set of cycles in which it factorizes
 #'
 #' @param cycles a list with the set of disjoint cycles
-#' @return the permutation in vector notation
+#' @return The permutation in vector notation
 #' @export
 #' @examples
 #' cycles2permutation(permutation2cycles(c(1,5,2,3,4)))
@@ -713,19 +739,19 @@ cycles2permutation <- function(cycles){
 #' @param perm1 a permutation
 #' @param perm2 optional a permutation
 #' @param dist.name optional. One of: kendall (default), cayley, hamming, ulam
-#' @return the distance between the permutations 
+#' @return The distance between the permutations 
 #' @export
 #' @examples
 #' distance(c(1,2,3,5,4))
 #' distance(c(1,2,3,5,4), c(1,2,3,5,4))
-#' distance(c(1,2,3,5,4), c(1,4,2,3,5), 'cayley')
-distance<-function(perm1,perm2=identity.permutation(length(perm1)), dist.name='kendall'){
+#' distance(c(1,2,3,5,4), c(1,4,2,3,5), "cayley")
+distance<-function(perm1,perm2=identity.permutation(length(perm1)), dist.name="kendall"){
   dist <- 0;
   perm.length<-length(perm1);
   if(! .same.length.perms(perm1,perm2))
     stop ("The permutations must have the same number of items")
   dist_id = .check.distance.name(dist.name)
-  if( dist.name == 'Hamming' || dist.name == 'hamming' ) {
+  if( dist.name == "Hamming" || dist.name == "hamming" ) {
     sigma <- .compose.perms(perm1, inverse.permutation(perm2))
     for(i in 1:perm.length)
       if (sigma[i] != i ) dist <- dist + 1
@@ -746,12 +772,14 @@ distance<-function(perm1,perm2=identity.permutation(length(perm1)), dist.name='k
 #' @param dist.name optional. One of: kendall (default), cayley, hamming, ulam
 #' @param disk optional can only be true if counting the permutations at each Ulam distance.
 #' Insted of generating the whole set of SYT and count of permutations per distance, it loads the info from a file in the disk
-#' @return the number of permutations at the given distance
+#' @return The number of permutations at the given distance
 #' @export
 #' @examples
-#' count.perms.distance(4,1,'ulam')
-#' count.perms.distance(4,2,'hamming')
-count.perms.distance <- function(perm.length, dist.value, dist.name='kendall', disk=FALSE){
+#' count.perms.distance(4,2,"kendall")
+#' count.perms.distance(4,2,"ulam")
+#' count.perms.distance(4,2,"hamming")
+#' count.perms.distance(4,2,"cayley")
+count.perms.distance <- function(perm.length, dist.value, dist.name="kendall", disk=FALSE){
   count <- 0
   dist_id = .check.distance.name(dist.name)
   if ( disk ){
@@ -773,7 +801,7 @@ count.perms.distance <- function(perm.length, dist.value, dist.name='kendall', d
 #'
 #' @param perm.length number of items in the permutations
 #' @param unfixed optional the number of unfixed points
-#' @return the number of permutations in which the number of 
+#' @return The number of permutations in which the number of 
 #' unfixed points is greater than or equal to the specified argument
 #' @export
 #' @examples
@@ -795,13 +823,13 @@ count.perms.unfixed.points.gtet <- function(perm.length, unfixed=perm.length){
 #'
 #' @param perm.length number of items in the permutations
 #' @param fixed the number of fixed points
-#' @return the number of permutations in which the number of 
+#' @return The number of permutations in which the number of 
 #' fixed points is equal to the specified argument
 #' @export
 #' @examples
 #' count.perms.fixed.points(4,1)
 count.perms.fixed.points <- function(perm.length, fixed){
-  return (count.perms.distance(perm.length, perm.length - fixed, 'hamming'))
+  return (count.perms.distance(perm.length, perm.length - fixed, "hamming"))
 }
 
 #' Count derangements
@@ -810,12 +838,12 @@ count.perms.fixed.points <- function(perm.length, fixed){
 #' how many permutations are there with no fixed point?
 #'
 #' @param perm.length number of items in the permutations
-#' @return the number of derangements of the specified length
+#' @return The number of derangements of the specified length
 #' @export
 #' @examples
 #' count.derangements(4)
 count.derangements <- function(perm.length){
-  return(count.perms.distance(perm.length, perm.length, 'hamming'))
+  return(count.perms.distance(perm.length, perm.length, "hamming"))
 }
 
 #' Count permutations with a given number of cycles
@@ -825,12 +853,13 @@ count.derangements <- function(perm.length){
 #'
 #' @param perm.length number of items in the permutations
 #' @param num.cycles number of cycles of the permutations to count
-#' @return the number of permutations with the specified number of cycles
+#' @return The number of permutations with the specified number of cycles
 #' @export
 #' @examples
 #' count.perms.cycles(4,2)
+#' count.perms.cycles(4,1)
 count.perms.cycles <- function(perm.length,num.cycles){
-  return(count.perms.distance (perm.length , perm.length - num.cycles, 'cayley'))
+  return(count.perms.distance (perm.length , perm.length - num.cycles, "cayley"))
 }
 
 #' Generate a collection of permutations with a given number of cycles
@@ -842,13 +871,13 @@ count.perms.cycles <- function(perm.length,num.cycles){
 #' @param n number of permutations in the sample
 #' @param perm.length number of items in the permutations
 #' @param cycles number of cycles
-#' @return a sample of permutations with the specified length 
+#' @return A sample of permutations with the specified length 
 #' and number of cycles
 #' @export
 #' @examples
 #' r.perms.cycles(1, 4, 2)
 r.perms.cycles <- function(n, perm.length, cycles){
-  return(r.dist.d(n, perm.length, perm.length - cycles, 'cayley'))
+  return(r.dist.d(n, perm.length, perm.length - cycles, "cayley"))
 }
 
 #' Generate a collection of derangements
@@ -859,13 +888,13 @@ r.perms.cycles <- function(n, perm.length, cycles){
 #'
 #' @param n number of permutations in the sample
 #' @param perm.length number of items in the permutations
-#' @return a sample of permutations with the specified length 
+#' @return A sample of permutations with the specified length 
 #' and number of cycles
 #' @export
 #' @examples
 #' r.perms.cycles(1, 4, 2)
 r.derangement <- function(n, perm.length){
-  return(r.dist.d(n, perm.length, perm.length, 'hamming'))
+  return(r.dist.d(n, perm.length, perm.length, "hamming"))
 }
 
 #' Generate a collection of permutations at a given distance
@@ -878,11 +907,11 @@ r.derangement <- function(n, perm.length){
 #' @param perm.length number of items in the permutations
 #' @param dist.value distance value
 #' @param dist.name distance name. One of: kendall (default), cayley, hamming, ulam
-#' @return a sample of permutations at the given distance
+#' @return A sample of permutations at the given distance
 #' @export
 #' @examples
-#' r.dist.d(1, 4, 2, 'ulam')
-r.dist.d <- function(n, perm.length, dist.value, dist.name='kendall'){
+#' r.dist.d(1, 4, 2, "ulam")
+r.dist.d <- function(n, perm.length, dist.value, dist.name="kendall"){
   num.perms <- n
   dist_id = .check.distance.name(dist.name)
   
@@ -898,21 +927,23 @@ r.dist.d <- function(n, perm.length, dist.value, dist.name='kendall'){
 #'
 #' @param perm the permutation
 #' @param dist.name optional the name of the distance. One of: kendall (default), cayley, hamming
-#' @return the distance decomposition vector of the given permutation and distance
+#' @return The distance decomposition vector of the given permutation and distance
 #' @export
 #' @examples
-#' permutation2decomposition(c(1,2,4,3,5), 'cayley')
-permutation2decomposition <- function(perm, dist.name='kendall'){
+#' permutation2decomposition(c(1,2,4,3,5), "kendall")
+#' permutation2decomposition(c(1,2,4,3,5), "cayley")
+#' permutation2decomposition(c(1,2,4,3,5), "hamming")
+permutation2decomposition <- function(perm, dist.name="kendall"){
   perm.length<-length(perm)
-  if (dist.name == 'Hamming' || dist.name == 'hamming') {
+  if (dist.name == "Hamming" || dist.name == "hamming") {
     vec <- rep(0,perm.length)
     for (i in 1:perm.length) if (perm[i] != i) vec[i] = 1
     return(vec)
   }
   vec <- c(1:perm.length) #only the first (perm.lenth-1) pos will be returned
   #the last equals 0
-  if      (dist.name == 'cayley' || dist.name == 'Cayley')     dist_id = .CAYLEY.DISTANCE 
-  else if (dist.name == 'Kendall' || dist.name == 'kendall')   dist_id = .KENDALL.DISTANCE 
+  if      (dist.name == "cayley" || dist.name == "Cayley")     dist_id = .CAYLEY.DISTANCE 
+  else if (dist.name == "Kendall" || dist.name == "kendall")   dist_id = .KENDALL.DISTANCE 
   else stop("Choose one of these distances: Cayley, Kendall, Hamming")
   res <- .C("get_altern_repre_for_permu", as.integer(dist_id), as.integer(perm.length), 
             as.integer(perm), as.integer(vec))[4]
@@ -926,14 +957,16 @@ permutation2decomposition <- function(perm, dist.name='kendall'){
 #'
 #' @param vec the permutation
 #' @param dist.name optional the name of the distance. One of: kendall (default), cayley, hamming
-#' @return the distance decomposition vector of the given permutation and distance
+#' @return The distance decomposition vector of the given permutation and distance
 #' @export
 #' @examples
-#' permutation2decomposition(c(1,2,4,3,5), 'cayley')
-decomposition2permutation <- function(vec, dist.name='kendall'){
-  if(dist.name == 'cayley' || dist.name == 'Cayley')           dist_id = .CAYLEY.DISTANCE
-  else if (dist.name == 'Kendall' || dist.name == 'kendall')   dist_id = .KENDALL.DISTANCE
-  else if (dist.name == 'Hamming' || dist.name == 'hamming')   dist_id = .HAMMING.DISTANCE
+#' decomposition2permutation(c(1,0,1,0,0), "kendall")
+#' decomposition2permutation(c(1,0,1,0,0), "cayley")
+#' decomposition2permutation(c(1,0,1,0,0), "hamming")
+decomposition2permutation <- function(vec, dist.name="kendall"){
+  if(dist.name == "cayley" || dist.name == "Cayley")           dist_id = .CAYLEY.DISTANCE
+  else if (dist.name == "Kendall" || dist.name == "kendall")   dist_id = .KENDALL.DISTANCE
+  else if (dist.name == "Hamming" || dist.name == "hamming")   dist_id = .HAMMING.DISTANCE
   else  stop("Choose one of these distances: Cayley, Kendall, Hamming")
   perm.length <- length(vec) 
   if (dist_id == 0 || dist_id == 1) {

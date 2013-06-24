@@ -13,6 +13,8 @@ class Exponential_model {
 protected:
     int n_;
 public:
+    virtual ~Exponential_model(){};
+    
     virtual int     maximum_distance() = 0 ;
     virtual int     distance(int*s1, int*s2) = 0;
     virtual double  probability(int*s, int*s_0, double*theta) = 0;
