@@ -110,7 +110,7 @@ public:
     Cayley(int ns){
         n_=ns;
         Generic gen;
-        gen.seed();
+        //gen.seed();
         stirling_matrix_ = new long double *[n_+1];
         facts_ = new long double[n_+1];
         //for (int i = 0 ; i < n_+1; i ++ )

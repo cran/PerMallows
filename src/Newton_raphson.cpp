@@ -159,9 +159,9 @@ double Newton_raphson::f(double theta) {
         //cout<<"trace theta :"<<theta<<" fval "<<dist_avg_<<" "<<a<<" "<<b<<endl;
         return dist_avg_ + a - b;
     }else if(distance_id_ == ULAM_DISTANCE){
-        double numer = 0, denom = 0;
+        long double numer = 0, denom = 0;
         for (int d = 0 ; d < n_ - 1; d++){
-            double aux = count_[d ] * exp(-theta *d ) ;
+            long double aux = count_[d ] * exp(-theta *d ) ;
             numer += aux * d;
             denom += aux;
         }
@@ -212,9 +212,9 @@ double Newton_raphson::fdev(double theta) {
         double b = exp(theta) / pow ( (exp( theta ) + 1 ), 2 );
         return a + b;
     }else if(distance_id_ ==  ULAM_DISTANCE){
-        double numer1 = 0, numer2 = 0, numer3 = 0, denom = 0;
+        long double numer1 = 0, numer2 = 0, numer3 = 0, denom = 0;
         for (int d = 0 ; d < n_ - 1; d ++){
-            double aux = count_[d] * exp(-theta *d ) ;
+            long double aux = count_[d] * exp(-theta *d ) ;
             numer1 += aux * d * d ;
             numer2 += aux;
             numer3 += aux * d;

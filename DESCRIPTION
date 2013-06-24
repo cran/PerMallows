@@ -1,7 +1,7 @@
 Package: PerMallows
 Type: Package
 Title: Permutations and Mallows distributions
-Version: 1.0
+Version: 1.1
 Date: 2013-06-24
 Author: Ekhine Irurozki <ekhine.irurozqui@ehu.es>
 Maintainer: Ekhine Irurozki <ekhine.irurozqui@ehu.es>
@@ -9,7 +9,7 @@ Description: This package includes functions to work with the Mallows, Generaliz
 License: GPL (>= 2)
 Depends: Rcpp (>= 0.10.3)
 LinkingTo: Rcpp
-Packaged: 2014-06-23 16:55:24 UTC; eki
+Packaged: 2014-06-25 13:45:01 UTC; eki
 NeedsCompilation: yes
 Repository: CRAN
-Date/Publication: 2014-06-23 21:01:51
+Date/Publication: 2014-06-25 17:30:08

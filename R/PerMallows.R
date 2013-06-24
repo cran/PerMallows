@@ -931,9 +931,9 @@ permutation2decomposition <- function(perm, dist.name='kendall'){
 #' @examples
 #' permutation2decomposition(c(1,2,4,3,5), 'cayley')
 decomposition2permutation <- function(vec, dist.name='kendall'){
-  if(dist.name == 'cayley' || dist.name == 'Cayley')           dist_id = 0
-  else if (dist.name == 'Kendall' || dist.name == 'kendall')   dist_id = 1
-  else if (dist.name == 'Hamming' || dist.name == 'hamming')   dist_id = 2
+  if(dist.name == 'cayley' || dist.name == 'Cayley')           dist_id = .CAYLEY.DISTANCE
+  else if (dist.name == 'Kendall' || dist.name == 'kendall')   dist_id = .KENDALL.DISTANCE
+  else if (dist.name == 'Hamming' || dist.name == 'hamming')   dist_id = .HAMMING.DISTANCE
   else  stop("Choose one of these distances: Cayley, Kendall, Hamming")
   perm.length <- length(vec) 
   if (dist_id == 0 || dist_id == 1) {

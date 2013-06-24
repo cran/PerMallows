@@ -20,6 +20,7 @@
 
 #include <iostream>
 #include <stdio.h>
+#include <ctime>
 /*************** CONSTANTS  *******************/
 
 #define BIG 100000

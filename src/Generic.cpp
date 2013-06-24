@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include <algorithm>
 #include <cmath>
+#include <ctime>
 #include "Hamming.h"
 #include "Cayley.h"
 #include "Ulam.h"
