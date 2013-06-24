@@ -7,16 +7,18 @@
 //
 
 #include "Generic.h"
-#include <unistd.h>
-#include <fcntl.h>
-#include <algorithm>
-#include <cmath>
-#include <ctime>
 #include "Hamming.h"
 #include "Cayley.h"
 #include "Ulam.h"
 #include "Kendall.h"
 #include "Ulam_disk.h"
+
+#include <unistd.h>
+#include <fcntl.h>
+#include <algorithm>
+#include <cmath>
+#include <ctime>
+#include <R.h>
 
 Exponential_model* Generic::new_instance(int distance_id, int n){
     if ( distance_id == HAMMING_DISTANCE )   return (new Hamming( n ));
@@ -145,7 +147,8 @@ void Generic::generate_random_permutation(int len, int first_item_in_perm, int*s
     //other option is to code Feller coupling
     for(int i=0;i<len;i++) sigma[i]=i+first_item_in_perm;
     for(int i=0;i<len-1;i++){
-        int pos = rand() % (len-i) + i;
+        //int pos = rand() % (len-i) + i;
+        int pos = (int) (unif_rand() * (len-i)) + i;
         int aux= sigma[i];
         sigma[i]=sigma[pos];
         sigma[pos]=aux;
@@ -286,7 +289,8 @@ void Generic::riffle_shuffle(int n, int m, int times, int *sigma, int **shuffle)
         for (int j = 0 ; j < n ; j++) aux [ j ] = sigma[ j ];
         for (int cont_times = 0 ; cont_times < times ; cont_times++) {
             l_min = 0; r_max = n ; cont = 0 ;
-            ran = (double) rand() / (RAND_MAX ) ;
+            //ran = (double) rand() / (RAND_MAX ) ;
+            ran = unif_rand();
             ran *= pow(2, (double)n);
             center =  0;
             while (acumul[ center ] < ran) center++;
@@ -296,7 +300,8 @@ void Generic::riffle_shuffle(int n, int m, int times, int *sigma, int **shuffle)
             l = l_max - l_min;
             r = n - l ;
             while (l > 0 && r > 0){
-                ran_int = rand() %(l + r );
+                //ran_int = rand() %(l + r );
+                ran_int = (int) (unif_rand() * (l + r ));
                 if (ran_int < l) {
                     shuffle[ i ][ cont ] = aux[ l_min ];
                     l_min ++;
@@ -324,7 +329,7 @@ void Generic::riffle_shuffle(int n, int m, int times, int *sigma, int **shuffle)
     delete [] aux;    
 }
 
-void Generic::seed(void) {
+/*void Generic::seed(void) {
     int fd, buf;
     if ((fd = open("/dev/urandom", O_RDONLY)) < 0) {
         perror("/dev/urandom");
@@ -332,7 +337,7 @@ void Generic::seed(void) {
     read(fd, &buf, sizeof (buf));
     close(fd);
     srand(buf);
-}
+}*/
 
 void Generic::partition_function_init(int n){
     //F(n,k)=F(n,k−1)+F(n−k,k)

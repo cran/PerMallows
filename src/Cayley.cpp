@@ -10,6 +10,7 @@
 #include "Generic.h"
 #include "Newton_raphson.h"
 #include "Ulam.h"
+#include <R.h>
 #include <cmath>
 #include <cfloat>
 
@@ -151,7 +152,8 @@ void Cayley::dist_decomp_vector2perm(int* vec, int* sigma) {
             while ( sigma_inv [ item ] != -1 || ! item_closes_cycle(pos, item, sigma, sigma_inv)) item --;
         }else{
             item = - 1 ;//from 0..n-1 !!!!
-            int random = rand() % (n_ - pos - 1);
+            //int random = rand() % (n_ - pos - 1);
+            int random = (int) (unif_rand() * (n_ - pos - 1));
             while ( random  >= 0 ){
                 item++;
                 if (sigma_inv [ item  ] == -1 &&  ! item_closes_cycle(pos , item, sigma, sigma_inv)  )     random --;
@@ -312,7 +314,8 @@ void Cayley::distances_sampling(int m, double theta, int **samples) {
         acumul[dista] =acumul[dista-1] +  exp(-theta  * dista) * stirling_matrix_[ n_ ][ n_ - dista ];//stirling1(n_,n_-dista);
     for (int i = 0 ; i < m; i ++ ){
         target_dist = 0;
-        rand_val = (double) acumul[ n_ - 1 ] * (double) rand() / RAND_MAX;
+        //rand_val = (double) acumul[ n_ - 1 ] * (double) rand() / RAND_MAX;
+        rand_val = (double) acumul[ n_ - 1 ] * unif_rand();
         while(acumul[target_dist] <= rand_val) target_dist++;
         int *sigma=generate_permu_with_k_cycles(n_,(n_-target_dist));
         samples[ i ] =sigma;
@@ -330,7 +333,8 @@ void Cayley::multistage_sampling(int m, double *theta, int **samples){
     for(int samp = 0 ; samp < m ; samp++){
         for(int i= 0;i < n_ - 1; i ++ ){
             double probaX_j = (double) 1/psi[ i ];//(double) exp(-theta[ i ])/psi[ i ]; //
-            if(((double)rand() / RAND_MAX) < probaX_j) x[ i ] = 0;
+            //if(((double)rand() / RAND_MAX) < probaX_j) x[ i ] = 0;
+            if(( unif_rand() ) < probaX_j) x[ i ] = 0;
             else x[ i ] =1;
         }
         x[n_-1] = 0;
@@ -386,13 +390,16 @@ void Cayley::gibbs_sampling(int m, double *theta, int model, int **samples) {
     for(int sample= 0;sample<m+burning_period_samples;sample++){
         int i,j, max_i=-1, max_j=-1, min;
         do{
-            i = rand() % n_;
-            j = rand() % n_;
+            //i = rand() % n_;
+            i = (int) (unif_rand() * n_);
+            //j = rand() % n_;
+            j = (int) (unif_rand() * n_);
         }while(i == j);
         bool make_swap = false;
         if(  same_cycle(i, j, sigma) )  make_swap=true;
         else{
-            double rand_double = (double)rand()/RAND_MAX;
+            //double rand_double = (double)rand()/RAND_MAX;
+            double rand_double = unif_rand();
             if(model == MALLOWS_MODEL){
                 if(rand_double < exp(-theta[0])) make_swap = true;
             }else{
@@ -446,7 +453,8 @@ int Cayley::get_most_prob_cycle(int ind, int **cycles, int len, int *leng_cycles
     for(int i=cont ; i < len; i ++ )
         if(i!=0)proba_cycles[ i ] = (float)proba_cycles[ i ]/acumul + (float)proba_cycles[i-1];
         else proba_cycles[ i ] = (float)proba_cycles[ i ]/acumul ;
-    float ran = (float)rand()/(RAND_MAX);
+    //float ran = (float)rand()/(RAND_MAX);
+    float ran = (float) unif_rand();
     delete []proba_cycles;
     for(int i=cont ; i < len; i ++ )
         if(proba_cycles[ i ]>ran){
@@ -467,7 +475,8 @@ int * Cayley::generate_permu_with_k_cycles(int n, int k){//generateUARPermuWithK
             sigma[cycle[n-1]] =cycle[0]+1;
             delete []cycle;
         }else{
-            long double  ran1 =((long double)rand() / ((double )RAND_MAX +1 ) );
+            //long double  ran1 =((long double)rand() / ((double )RAND_MAX +1 ) );
+            long double  ran1 =(long double) unif_rand();
             int ran2=-1;
             if(ran1 < (long double)(stirling_matrix_[ n - 1 ][ k - 1 ] / stirling_matrix_[ n ][ k ])){//stirling1(n-1, k-1) / stirling1(n,k))){////n is in a cycle by itself
                 /* long double ran1 = rand() % (long double)stirling1(n,k),  ran2=-1; if(ran1 < stirling1(n-1, k-1)){ */
@@ -478,7 +487,8 @@ int * Cayley::generate_permu_with_k_cycles(int n, int k){//generateUARPermuWithK
             }else{
                 int *small=generate_permu_with_k_cycles(n-1, k);
                 for (int i = 0 ; i < n-1; i ++ )sigma[ i ] =small[ i ];
-                ran2 = rand() % (n-1) ;//0..n-2
+                //ran2 = rand() % (n-1) ;//0..n-2
+                ran2 = (int) (unif_rand() * (n-1) );//[ 0,n-2)
                 sigma[n-1] =sigma[ran2];
                 sigma[ran2] =n;
                 delete []small;

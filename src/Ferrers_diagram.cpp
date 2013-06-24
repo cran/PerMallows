@@ -8,6 +8,8 @@
 
 #include "Ferrers_diagram.h"
 
+#include <R.h>
+
 void Ferrers_diagram::random_SYT(){
     //￼A Probabilistic Proof of a Formula for the Number of Young Tableaux of a Given Shape
     //by Greene, Nijenhuis and Wilf
@@ -17,7 +19,8 @@ void Ferrers_diagram::random_SYT(){
     init_tables_for_random_SYT_generation();
 
     do{
-        rand_cell = rand() % n_count;
+        //rand_cell = rand() % n_count;
+        rand_cell = (int) (unif_rand() * n_count);
         walk(rand_cell, &corner_i, &corner_j);
         syt_[corner_i][ corner_j ] = n_count;
         n_count --;
@@ -52,7 +55,8 @@ void Ferrers_diagram::walk(int rand_cell, int *cell_i, int* cell_j){
         hook_bottom = 0 ;
         while (cont < ferrers_shape_length_dynamic_ && c_j < ferrers_shape_dynamic_[ cont++ ] )
             hook_bottom ++;
-        ran = rand () % (hook_right + hook_bottom ) ;
+        ran = (int) (unif_rand() * (hook_right + hook_bottom ) );
+        //ran = rand() % (hook_right + hook_bottom ) ;
         if ( ran < hook_bottom ) c_i += ran + 1;
         else c_j += ran - hook_bottom + 1;
         is_dynamic_corner  = ferrers_shape_dynamic_[ c_i ] ==  ( c_j + 1)

@@ -1,4 +1,4 @@
-#2 way for calling the code in c
+#2 way for calling the C code
 #res <- .C("factorial_fast", as.integer(perm.length), as.double(res))[2];
 #res is a list. For extracting the value
 #   res[[1]] or
@@ -14,10 +14,10 @@
 
 ###################   GENERAL   ###################
 
-.CAYLEY.DISTANCE <- 0
+.CAYLEY.DISTANCE  <- 0
 .KENDALL.DISTANCE <- 1
 .HAMMING.DISTANCE <- 2
-.ULAM.DISTANCE <- 3
+.ULAM.DISTANCE    <- 3
 
 #' Generate every permutation of perm.length item
 #' 
@@ -245,12 +245,13 @@ freq.matrix <- function(perm){
 #' @return The marginal probability
 #' @export
 #' @examples
-#' marginal(c(1,0,1,-1,-1), c(0.1, 0.3, 0.7, 0.1, 1))
-#' marginal(c(-1,0,1,-1,-1,0), c(0.1, 0.3, 0.7, 0.1, 0.7, 1))
+#' marginal(c(1,0,1,NA,NA), c(0.1, 0.3, 0.7, 0.1, 1))
+#' marginal(c(NA,0,1,NA,NA,0), c(0.1, 0.3, 0.7, 0.1, 0.7, 1))
 marginal <- function(h, theta){
   if (length(h) != length(theta))
     stop("Check the length of the h and theta vectors")
   res <- 0
+  h[is.na(h)] <- -1
   res<-.C("marginals", as.integer(length(h)), as.integer(.check.distance.name("hamming")), as.integer(h),
           as.numeric(theta), as.double(res))[5]
   return (res[[1]]) 
@@ -332,6 +333,7 @@ expectation.gmm <- function (theta, dist.name="kendall"){
 #' @param theta dispersion parameter of the MM
 #' @param dist.name optional name of the distance used in the MM. One of: kendall (default), cayley, hamming, ulam
 #' @return The probability of sigma in the given MM
+#' @export
 #' @examples
 #' sample <- matrix(c(1,2,3, 4,1,4,3,2,1,2,4,3), nrow = 3, ncol = 4, byrow = TRUE)
 #' sig<-c(1,2,3,4)
@@ -341,7 +343,6 @@ expectation.gmm <- function (theta, dist.name="kendall"){
 #' dmm(c(1,3,2,4), theta=0.1, dist.name="cayley")
 #' dmm(c(1,3,2,4), theta=0.1, dist.name="hamming")
 #' dmm(c(1,3,2,4), theta=0.1, dist.name="ulam")
-#' @export
 dmm <- function(perm, sigma0=identity.permutation(length(perm)), theta, dist.name="kendall"){
 if (!is.permutation(perm) || ! is.permutation(sigma0))
     stop("Check parameters")
@@ -361,6 +362,7 @@ if (!is.permutation(perm) || ! is.permutation(sigma0))
 #' @param theta vector dispersion parameter of the GMM
 #' @param dist.name optional name of the distance used in the GMM. One of: kendall (default), cayley, hamming
 #' @return The probability of sigma in the given GMM
+#' @export
 #' @examples
 #' sample <- matrix(c(1,2,3,4, 1,4,3,2, 1,2,4,3), nrow = 3, ncol = 4, byrow = TRUE)
 #' sig <- c(1,2,3,4)
@@ -369,7 +371,6 @@ if (!is.permutation(perm) || ! is.permutation(sigma0))
 #' sum(log.prob)
 #' dgmm (c(1,2,3,4), theta=c(1,1,1))
 #' dgmm (c(1,2,3,4), theta=c(1,1,1), dist.name="cayley")
-#' @export
 dgmm <- function(perm, sigma0=identity.permutation(length(perm)), theta, dist.name="kendall"){
   if (!is.permutation(perm) || ! is.permutation(sigma0))
     stop("Check parameters")
@@ -483,8 +484,8 @@ rgmm <- function(n, sigma0, theta, dist.name="kendall", sampling.method="gibbs")
 
 #' Learn a Mallows Model
 #'
-#' Learn the parameter of a sample of n permutations comming from 
-#' a Mallows Model (MM). 
+#' Learn the parameter of the distribution of a sample of n permutations 
+#' comming from a Mallows Model (MM). 
 #'
 #' @param sample the matrix with the permutations to estimate
 #' @param sigma_0_ini optional the initial guess for the consensus permutation
@@ -503,8 +504,9 @@ rgmm <- function(n, sigma0, theta, dist.name="kendall", sampling.method="gibbs")
 #' lmm(sample, dist.name="hamming", estimation="exact")
 #' lmm(sample, dist.name="ulam", estimation="approx")
 lmm <- function(sample, sigma_0_ini =identity.permutation(dim(sample)[2]), dist.name="kendall", estimation="approx", disk=FALSE){
-  if (! is.permutation(sample))
-    stop("Check parameters")
+  if (! is.permutation(sample)) stop("Check parameters")
+  if(! .same.length.perms(sample[1,],sigma_0_ini)) 
+    stop ("Permutation sigma_0_ini must have the same number of items as the permutations in the sample")
   num.perms <- dim(sample)[1]
   perm.length <- dim(sample)[2]
   dist_id = .check.distance.name(dist.name)
@@ -533,8 +535,8 @@ lmm <- function(sample, sigma_0_ini =identity.permutation(dim(sample)[2]), dist.
 
 #' Learn a Generalized Mallows Model
 #'
-#' Learn the parameter of a sample of n permutations comming from 
-#' a Generalized Mallows Model (GMM). 
+#' Learn the parameter of the distribution of a sample of n permutations 
+#' comming from a Generalized Mallows Model (GMM). 
 #'
 #' @param sample the matrix with the permutations to estimate
 #' @param sigma_0_ini optional the initial guess for the consensus permutation
@@ -550,8 +552,9 @@ lmm <- function(sample, sigma_0_ini =identity.permutation(dim(sample)[2]), dist.
 #' lgmm(sample, dist.name="cayley", estimation="exact")
 #' lgmm(sample, dist.name="hamming", estimation="approx")
 lgmm <- function(sample, sigma_0_ini =identity.permutation(dim(sample)[2]), dist.name="kendall", estimation="approx"){
-  if (! is.permutation(sample))
-    stop("Check parameters")
+  if (! is.permutation(sample)) stop("Check parameters")
+  if(! .same.length.perms(sample[1,], sigma_0_ini)) 
+    stop ("Permutation sigma_0_ini must have the same number of items as the permutations in the sample")
   num.perms <- dim(sample)[1]
   perm.length <- dim(sample)[2]
   dist_id = .check.distance.name(dist.name , TRUE)
@@ -569,6 +572,77 @@ lgmm <- function(sample, sigma_0_ini =identity.permutation(dim(sample)[2]), dist
   return(list(mode = sigma0, theta = the[1:theta.len]));
 }
 
+#' MLE for theta - Mallows Model
+#'
+#' Compute the MLE for the dispersion parameter (theta) given a sample of n permutations
+#' and a central permutation
+#'
+#' @param sample the matrix with the permutations to estimate
+#' @param sigma_0 optional the consensus permutation. If not given it is assumed to be the identity permutation
+#' @param dist.name optional the name of the distance used by the model. One of: kendall (default), cayley, hamming, ulam
+#' @param disk optional can only be true if estimating a MM under the Ulam distance.
+#' Insted of generating the whole set of SYT and count of permutations per distance, it loads the info from a file in the disk
+#' @return The MLE for the dispersion parameter
+#' @export
+#' @examples
+#' sample <- matrix(c(1,2,3,4, 1,4,3,2, 1,2,4,3), nrow = 3, ncol = 4, byrow = TRUE)
+#' lmm.theta(sample, dist.name="kendall")
+#' lmm.theta(sample, dist.name="cayley")
+#' lmm.theta(sample, dist.name="cayley", sigma_0=c(1,4,3,2))
+#' lmm.theta(sample, dist.name="hamming")
+#' lmm.theta(sample, dist.name="ulam")
+lmm.theta <- function(sample, sigma_0 =identity.permutation(dim(sample)[2]), dist.name="kendall",
+                         disk=FALSE){
+  if (! is.permutation(sample))  stop("Check parameters")
+  if(! .same.length.perms(sample[1,], sigma_0)) 
+    stop ("Permutation sigma_0 must have the same number of items as the permutations in the sample")
+  num.perms <- dim(sample)[1]
+  perm.length <- dim(sample)[2]
+  dist_id = .check.distance.name(dist.name)
+  
+  if ( disk ){
+    if ( dist_id == 3){
+      dist_id = 4
+      if ( ! file.exists(paste('permus_per_dist_',perm.length, sep="")) )
+        stop("Generate first the files. Try: ",paste ('generate.aux.files(',perm.length, ')'))
+    }
+    else stop ("Estimation form disk can only be used with Ulam distance")
+  }
+  
+  the <- .Call("estimate_theta", dist_id, perm.length, num.perms, sigma_0, sample, 0)
+  return(theta = the[1]);
+}
+
+#' MLE for theta - Generalized Mallows Model
+#'
+#' Compute the MLE for the dispersion parameter (theta) given a sample of n permutations
+#' and a central permutation
+#'
+#' @param sample the matrix with the permutations to estimate
+#' @param sigma_0 optional the initial guess for the consensus permutation. If not given it is assumed to be the identity permutation
+#' @param dist.name optional name of the distance used by the GMM. One of: kendall (default), cayley, hamming
+#' @return The MLE for the dispersion parameter
+#' @export
+#' @examples
+#' sample <- matrix(c(1,2,3,4, 1,4,3,2, 1,2,4,3), nrow = 3, ncol = 4, byrow = TRUE)
+#' lgmm.theta(sample, dist.name="kendall")
+#' lgmm.theta(sample, dist.name="cayley")
+#' lgmm.theta(sample, dist.name="cayley", sigma_0=c(1,4,3,2))
+#' lgmm.theta(sample, dist.name="hamming")
+lgmm.theta <- function(sample, sigma_0 =identity.permutation(dim(sample)[2]), dist.name="kendall"){
+  if (! is.permutation(sample))  stop("Check parameters")
+  if(! .same.length.perms(sample[1,], sigma_0)) 
+    stop ("Permutation sigma_0 must have the same number of items as the permutations in the sample")
+  num.perms <- dim(sample)[1]
+  perm.length <- dim(sample)[2]
+  dist_id = .check.distance.name(dist.name , TRUE)
+  
+  the <- .Call("estimate_theta", dist_id, perm.length, num.perms, sigma_0, sample, 1)
+  if ( dist_id == 2 ) theta.len = perm.length
+  else  theta.len = perm.length - 1
+  return(theta = the[1:theta.len]);
+}
+
 #' Generates the files for Ulam
 #'
 #' Generates files for Ulam which are aimed to accelelrate the processes of counting 
@@ -581,9 +655,8 @@ lgmm <- function(sample, sigma_0_ini =identity.permutation(dim(sample)[2]), dist
 #' @examples
 #' generate.aux.files(4)
 generate.aux.files <- function(perm.length){
-   .C("save_counts_to_files", as.integer(perm.length))
+  .C("save_counts_to_files", as.integer(perm.length))
 }
-
 
 ###################   DISTANCE RELATED   ###################
 
@@ -980,15 +1053,7 @@ decomposition2permutation <- function(vec, dist.name="kendall"){
 }
 
 ###################   DATASET   ###################
-#' @name datapos
-#' @docType data
-#' @title Sample of permutations
-#' @description
-#' A rda file containing 20 permutations of 6 items
-#' @format
-#' Each row is a permtuation
-NULL
-#' @name data.1
+#' @name perm.sample.med
 #' @docType data
 #' @title Sample of permutations
 #' @description
@@ -996,15 +1061,7 @@ NULL
 #' @format
 #' Each row is a permtuation
 NULL
-#' @name data.2
-#' @docType data
-#' @title Sample of permutations
-#' @description
-#' A rda file containing a sample of permutations
-#' @format
-#' Each row is a permtuation
-NULL
-#' @name data.3
+#' @name perm.sample.small
 #' @docType data
 #' @title Sample of permutations
 #' @description
@@ -1021,14 +1078,6 @@ NULL
 #' Each row is a permtuation
 NULL
 #' @name data.order
-#' @docType data
-#' @title Sample of permutations
-#' @description
-#' A rda file containing a sample of permutations
-#' @format
-#' Each row is a permtuation
-NULL
-#' @name data
 #' @docType data
 #' @title Sample of permutations
 #' @description

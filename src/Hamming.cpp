@@ -9,11 +9,11 @@
 #include "Hamming.h"
 #include "Generic.h"
 #include "Lap.h"
-#include <cmath>
-#include <float.h>
 #include "Newton_raphson.h"
 
-
+#include <cmath>
+#include <float.h>
+#include <R.h>
 
 double Hamming::probability(int *s, int *s_0, double *theta){
     double  pro = 0;
@@ -42,15 +42,18 @@ void Hamming::random_derangement(int n, int *sigma){
     if( n== 2) {
         sigma[0]=2;
         sigma[1]=1;
-    }else if ( (n-1)*deran_num_[n-1] / deran_num_[n] > (double) rand() / RAND_MAX ){
+    //}else if ( (n-1)*deran_num_[n-1] / deran_num_[n] > (double) rand() / RAND_MAX ){
+    }else if ( (n-1)*deran_num_[n-1] / deran_num_[n] > unif_rand() ){
         random_derangement(n-1, sigma);
-        int ran = rand() % (n - 1 );
+        //int ran = rand() % (n - 1 );
+        int ran = (int) (unif_rand() * (n - 1 ));
         sigma[n-1] = sigma[ran];
         sigma[ran]= n;
     }else{
         int*deran = new int[ n - 2 ], *conv = new int[n-1];
         random_derangement( n - 2 , deran );
-        int ran = rand() % (n - 1 );
+        //int ran = rand() % (n - 1 );
+        int ran = (int) (unif_rand() * (n - 1 ));
         int j = 0;
         for (int i= 0; i < n-1 ; i ++)
             if ( i != ran ) conv[j++] = i+1;
@@ -140,7 +143,8 @@ void Hamming::distances_sampling(int m, double theta, int **samples){
     //for (int d = 0 ; d <= d_max ; d++) cout<<acumul[d]<<" ";cout<<endl;
     for( int i = 0 ; i < m ; i++ ){
         target_dist = 0;
-        rand_val = (long double) acumul[ d_max ] * (double) rand() / RAND_MAX;
+        //rand_val = (long double) acumul[ d_max ] * (double) rand() / RAND_MAX;
+        rand_val = (long double) (acumul[ d_max ] * unif_rand());
         while ( acumul[ target_dist ] <= rand_val ) target_dist ++;
         int *sigma = new int[ n_ ];
         random_permu_at_dist_d( target_dist , sigma);
@@ -324,7 +328,8 @@ void Hamming::multistage_sampling(int m, double *theta, int **samples){
             marg_0 = rand_double = 0;
             marg_0 = compute_marginal_iterative(h , theta, items_set + 1);//8
             marg_1 = marg - marg_0;
-            rand_double = marg * (double)rand() / (RAND_MAX);//2
+            //rand_double = marg * (double)rand() / (RAND_MAX);//2
+            rand_double = marg * unif_rand();
             if (rand_double < marg_0) {
                 marg = marg_0;
                 h[ items_set ] = 0;
@@ -351,8 +356,10 @@ void Hamming::gibbs_sampling(int m, double *theta, int model, int **samples){
     for ( int sample = 0 ; sample < m + burning_period_samples ; sample ++){
         int i, j;
         do{
-            i = rand() % (n_);
-            j = rand() % (n_);
+            //i = rand() % (n_);
+            //j = rand() % (n_);
+            i = (int) (unif_rand() * n_);
+            j = (int) (unif_rand() * n_);
         }while ( i == j );
         h_i     = (i == sigma[i] - 1) ? 0 : 1 ;
         h_j     = (j == sigma[j] - 1) ? 0 : 1 ;
@@ -360,7 +367,8 @@ void Hamming::gibbs_sampling(int m, double *theta, int model, int **samples){
         h_j_new = (j == sigma[i] - 1) ? 0 : 1 ;
         
         ratio = exp(- h_j_new * theta[j]) * exp(- h_i_new * theta[i]) / (exp(- h_j * theta[j]) * exp(- h_i * theta[i]));
-        rand_double = (double)rand()/RAND_MAX;
+        //rand_double = (double)rand()/RAND_MAX;
+        rand_double = unif_rand();
         if (rand_double < ratio ) {
             int aux = sigma[i];
             sigma[i] = sigma[j];

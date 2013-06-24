@@ -11,6 +11,7 @@
 #include "Ulam.h"
 #include "Newton_raphson.h"
 #include "Exponential_model.h"
+#include "Lap.h"
 
 #include <R.h>
 #include <Rmath.h>
@@ -27,20 +28,26 @@
 extern "C" {
     
     void count_permus_with_at_least_k_unfixed_points ( int*n, int *k, double * res){
+        GetRNGstate();
         Generic gen;
         *res = (double)gen.count_permus_with_at_least_k_unfixed_points(*n, *k);
+        PutRNGstate();
     }
     
     void random_permutation(int *n, int *sigma){
+      GetRNGstate();
         Generic gen;
         gen.generate_random_permutation(*n, FIRST_ITEM, sigma);
+        PutRNGstate();
     }
     
     void compute_distance (int*dist_id, int*n,int*s1, int*s2, int*d) {
+      GetRNGstate();
         Generic gen;
         Exponential_model * exp_mod = gen.new_instance(*dist_id, *n);
         *d=exp_mod->distance(s1,s2);
         delete exp_mod;
+        PutRNGstate();
     }
     
     void count_permus_at_dist (int*dist_id, int*n, int*d, double*res) {
@@ -48,13 +55,16 @@ extern "C" {
         Exponential_model * exp_mod = gen.new_instance(*dist_id, *n);
         *res= (double) exp_mod->num_permus_at_distance(*d);
         delete exp_mod;
+        PutRNGstate();
     }
     
     void probability(int*dist_id, int*n, int*sigma, int*sigma_0, double*theta, double*prob){
+      GetRNGstate();
         Generic gen;
         Exponential_model * exp_mod = gen.new_instance(*dist_id, *n);
         *prob = exp_mod->probability(sigma, sigma_0, theta);
         delete exp_mod;
+        PutRNGstate();
     }
     
     void get_altern_repre_for_permu(int*dist_id, int*n, int*sigma, int*vec){
@@ -65,37 +75,46 @@ extern "C" {
     }
     
     void get_permu_given_altern_repre(int*dist_id, int*n, int*vec, int*sigma){
+      GetRNGstate();
         Generic gen;
         Exponential_model * exp_mod = gen.new_instance(*dist_id, *n);
         exp_mod->dist_decomp_vector2perm(vec, sigma);
         delete exp_mod;
+        PutRNGstate();
     }
     
     void expectation(int*dist_id, int* model, int *n, double * theta, double* h_avg){
+      GetRNGstate();
         Generic gen;
         Exponential_model * exp_mod = gen.new_instance(*dist_id, *n);
         if ( *model == MALLOWS_MODEL )
           h_avg[0] = exp_mod->expectation(theta[ 0 ]);
         else exp_mod->expectation(theta, h_avg);
         delete exp_mod;
+        PutRNGstate();
     }
     
     void save_counts_to_files ( int*n){
+      GetRNGstate();
         Ulam_disk * ul = new Ulam_disk(*n);
         ul->save_counts_to_file();
         delete ul;
+        PutRNGstate();
     }
     
     void marginals ( int*n, int *dist_id, int *h, double * theta, double *res){
+      GetRNGstate();
         Hamming *ham = new Hamming(*n);
         *res = ham->compute_marginal(h, theta);
         delete ham;
+        PutRNGstate();
     }
     
     
     /***************       SAMPLING (GENERATING)      *******************/
     
     SEXP get_random_sample_at_dist_d(SEXP dist_id_var, SEXP n_var, SEXP m_var, SEXP d_var){
+      GetRNGstate();
         
         SEXP Rval;
         int n = INTEGER_VALUE(n_var);
@@ -116,10 +135,12 @@ extern "C" {
         for (int i = 0 ; i < m ;  i ++ ) delete [] sample[ i ];
         delete [] sample;
         delete exp_mod;
+        PutRNGstate();
         return Rval;
     }
     
     SEXP distances_sampling(SEXP dist_id_var, SEXP n_var, SEXP m_var, SEXP theta_var){
+      GetRNGstate();
         int     m  =    INTEGER_VALUE(m_var);
         int     n  =    INTEGER_VALUE(n_var);
         int dist_id  =  INTEGER_VALUE(dist_id_var);
@@ -138,6 +159,7 @@ extern "C" {
         for (int i = 0 ; i < m ;  i ++ ) delete [] sample[ i ];
         delete [] sample;
         delete exp_mod;
+        PutRNGstate();
         return Rval;
     }
     
@@ -146,6 +168,7 @@ extern "C" {
     //sam <- .Call("sampling_multi_gibbs_cayley",dist_id,  permu.length, num.permus, theta, 0, algorithm_id)
     SEXP sampling_multi_gibbs_cayley(SEXP dist_id_var,SEXP n_var, SEXP m_var,
                                      SEXP theta_var, SEXP model_var,SEXP method_var){
+         GetRNGstate();
         //method_var == 1 multistage
         //method_var == 2 gibbs
         int m  = INTEGER_VALUE(m_var);
@@ -176,6 +199,7 @@ extern "C" {
         for (int i = 0 ; i < m ;  i ++ ) delete [] sample[ i ];
         delete [] sample;
         delete exp_mod;
+        PutRNGstate();
         return Rval;
     }
     
@@ -185,6 +209,9 @@ extern "C" {
         //mm_var==0 mm
         //mm_var==1 gmm
         //estim_var == 0 exact
+        
+        GetRNGstate();
+        
         SEXP Rdim = getAttrib(samples, R_DimSymbol);
         
         //PROTECT(sigma_0_ini_var = AS_INTEGER(sigma_0_ini_var));
@@ -224,13 +251,14 @@ extern "C" {
         for(int i=0;i<m;i++) delete [] c_samples[ i ];
         delete [] c_samples;
         delete [] sigma_0;
+        PutRNGstate();
         return myint;
     }
     
     SEXP estimate_theta(SEXP dist_id_var, SEXP n_var, SEXP m_var, SEXP sigma_0_var, SEXP samples_var, SEXP model_var){
         //model (model_var)  MM=0 ;;;; 1 =GMM
         
-        
+        GetRNGstate();
         SEXP Rval;
         int i, a, b;
         PROTECT(Rval = allocVector(INTSXP, 1));
@@ -263,12 +291,15 @@ extern "C" {
         for (int i = 0 ; i < m ;  i ++ ) delete [] samples[ i ];
         delete [] samples;
         delete exp_mod;
+        PutRNGstate();
         return Rval;
     }
     //Call("get_log_likelihood",dist_id,    permu.length, num.permus, sigma_0, theta, samples, model)
     
     SEXP get_log_likelihood(SEXP dist_id_var, SEXP n_var, SEXP m_var, SEXP sigma_0_var, SEXP theta_var,
                             SEXP samples_var, SEXP model_var){
+        
+        GetRNGstate();
         //model (model_var)  MM=0 ;;;; 1 =GMM
         SEXP Rval;
         int i, a, b;
@@ -316,6 +347,7 @@ extern "C" {
         for (int i = 0 ; i < m ;  i ++ ) delete [] samples[ i ];
         delete [] samples;
         delete [] sigma_0;
+        PutRNGstate();
         return Rval;
     }
     

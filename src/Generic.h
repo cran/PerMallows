@@ -86,7 +86,7 @@ public:
     
     bool valid_permutation(int*sigma, int n);
     
-    void seed(void);
+    //void seed(void);
     
     void partition_function_init(int n);
     

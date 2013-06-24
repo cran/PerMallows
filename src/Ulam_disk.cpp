@@ -8,6 +8,7 @@
 
 
 #include "Ulam_disk.h"
+#include <R.h>
 
 void    Ulam_disk::read_permus_per_dist(){
     if ( num_permus_per_dist_[ 0 ] == 0 ){//not initialized
@@ -171,7 +172,8 @@ void Ulam_disk::distances_sampling(int m, double theta, int **samples){
     for (int i = 1 ; i < n_ ; i++)//acumulate the number of permus at each distance
         proba[i] = num_permus_per_dist_[i] * exp ( -theta * i ) + proba[ i - 1 ];
     for (int i = 0 ; i < m ; i ++){
-        rand_distance = (double) rand() / (double)(RAND_MAX) * proba[ n_ - 1 ];
+        //rand_distance = (double) rand() / (double)(RAND_MAX) * proba[ n_ - 1 ];
+        rand_distance = unif_rand() * proba[ n_ - 1 ];
         target_distance = 0;
         while(proba[ target_distance ] <= rand_distance) target_distance++;
         samples[ i ] = new int[ n_ ];
@@ -192,7 +194,8 @@ void Ulam_disk::generate_permu_with_given_LIS (int l, int *sigma){
     int     *col_index = new int[n_], *row_index = new int[n_];
     
     read_permus_per_dist();//OJO WARNING - si es de clase
-    double target_permus = (double)rand() / (double)(RAND_MAX) * num_permus_per_dist_[ d ];
+    //double target_permus = (double)rand() / (double)(RAND_MAX) * num_permus_per_dist_[ d ];
+    double target_permus = unif_rand()* num_permus_per_dist_[ d ];
     int * shape = new int[ n_ ] , shape_len = 0;
     read_permus_per_shape(d , target_permus, shape, &shape_len);
     

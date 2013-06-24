@@ -9,7 +9,9 @@
 #include "Ulam.h"
 
 #include <vector>
+#include <R.h>
 #include <set>
+
 double Ulam::probability(int *s, int *s_0, double * theta){
     int dist = distance(s, s_0);
     double *proba = new double[ n_ ];
@@ -321,7 +323,8 @@ void Ulam::generate_permu_with_given_LIS(int l, int *sigma){//TODO cambiar a 2 s
     int     *col_index = new int[n_], *row_index = new int[n_];
     long double fs_index ;//ferrer shape index
     int fs_length;//ferrer shape len
-    double permus = (double)rand() / (double)(RAND_MAX) * num_permus_per_dist_[ d ];
+    //double permus = (double)rand() / (double)(RAND_MAX) * num_permus_per_dist_[ d ];
+    double permus = unif_rand()* num_permus_per_dist_[ d ];
     fs_index = first_index_at_dist_[ d ];
     while(num_permus_at_shape_acumul_[ fs_index ] <= permus){
         fs_index++;
@@ -393,7 +396,8 @@ void Ulam::distances_sampling(int m, double theta, int **samples){
     for (int i = 1 ; i < n_ ; i++)//acumulate the number of permus at each distance
         proba_acumul[i] = num_permus_per_dist_[i] * exp ( -theta * i ) + proba_acumul[ i - 1 ];
     for (int i = 0 ; i < m ; i ++){
-        rand_distance = (double) rand() / (double)(RAND_MAX) * proba_acumul[ n_ - 1 ];
+        //rand_distance = (double) rand() / (double)(RAND_MAX) * proba_acumul[ n_ - 1 ];
+        rand_distance = unif_rand() * proba_acumul[ n_ - 1 ];
         target_distance = 0;
         while(proba_acumul[ target_distance ] <= rand_distance) target_distance++;
         samples[ i ] = new int[ n_ ];
@@ -420,14 +424,17 @@ void Ulam::gibbs_sampling(int m, double *theta, int model, int **samples){
         int a;
         int b;
         do {
-            a = rand() % ( n_ );
-            b = rand() % ( n_ );
+            //a = rand() % ( n_ );
+            //b = rand() % ( n_ );
+            a = (int) (unif_rand() * n_);
+            b = (int) (unif_rand() * n_);
         }while (a == b);
         gen.insert_at(sigma, n_ , a , b , sigma_prime);
         bool make_swap = false;
         if(  distance(sigma) > distance(sigma_prime) )  make_swap = true;
         else{
-            double rand_double = (double)rand()/RAND_MAX;
+            //double rand_double = (double)rand()/RAND_MAX;
+            double rand_double = unif_rand();
                 if(rand_double < exp(-theta[0])) make_swap = true;
         }
         if(make_swap){

@@ -7,6 +7,7 @@
 //
 
 #include <cmath>
+#include <R.h>
 #include "Newton_raphson.h"
 #include "Kendall.h"
 
@@ -84,7 +85,8 @@ void Kendall::random_permu_at_dist_d( int dist, int*sigma  ){
             for(int j = 1; j < max; j++ )
                 if(rest_max_dist + j >= dist) acum[j] = acum[j-1] + count_[ n_ - i - 1 ] [ dist - j];
                 else acum[ j ] = 0;
-            double bound = (double)rand() / (double)(RAND_MAX) * acum[ max - 1 ];
+            //double bound = (double)rand() / (double)(RAND_MAX) * acum[ max - 1 ];
+            double bound = unif_rand() * acum[ max - 1 ];
             int pos = 0 ;
             while(acum[pos] <= bound) pos++;
             dist -= pos;
@@ -135,7 +137,8 @@ void Kendall::distances_sampling(int m, double theta, int**samples) {
         acumul[ dista ] = acumul[ dista - 1 ] +  exp(-theta  * dista) * count_[ n_ ][ dista ];
     for( int i = 0 ; i < m ; i++ ){
         target_dist = 0;
-        rand_val = (double) acumul[ d_max ] * (double) rand() / RAND_MAX;
+        rand_val = (double) acumul[ d_max ] * unif_rand();
+        //rand_val = (double) acumul[ d_max ] * (double) rand() / RAND_MAX;
         while ( acumul[ target_dist ] <= rand_val ) target_dist ++;
         int *sigma = new int[ n_ ];
         random_permu_at_dist_d( target_dist , sigma);
@@ -163,7 +166,8 @@ void Kendall::multistage_sampling(int m, double*theta, int**samples){
     for(int samp = 0 ; samp < m ; samp++){
         for( int i = 0 ; i < n_ - 1 ; i ++ ){
             int target_v = 0 ;
-            double rand_val = (double) vprobs[i][ n_ - i - 1 ] * (double) rand() / RAND_MAX;
+            //double rand_val = (double) vprobs[i][ n_ - i - 1 ] * (double) rand() / RAND_MAX;
+            double rand_val = (double) vprobs[i][ n_ - i - 1 ] * unif_rand();
             while(vprobs[i][target_v] <= rand_val) target_v ++;
             v[i] = target_v;
         }        
@@ -189,13 +193,15 @@ void Kendall::gibbs_sampling(int m, double *theta, int model, int **samples) {
     
     for(int sample = 0 ; sample < m + burning_period_samples ; sample ++){
         int i;
-        i = rand() % (n_ - 1);
+        //i = rand() % (n_ - 1); [0,n-2]
+        i = (int) (unif_rand() * (n_ - 1));// interval double [0,n-1) = int [0,n-2]
         int a = sigma[ i ];
         int b = sigma[ i + 1 ];
         bool make_swap = false;
         if( a > b )  make_swap = true;
         else{
-            double rand_double = (double)rand()/RAND_MAX;
+            //double rand_double = (double)rand()/RAND_MAX;
+            double rand_double = unif_rand();
             if( model == MALLOWS_MODEL ){
                 if(rand_double < exp(-theta[0])) make_swap = true;
             }else{

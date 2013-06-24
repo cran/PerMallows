@@ -63,7 +63,7 @@ Exponential_model * exp_mod_;
 int main(int argc, const char * argv[])
 { 
     Generic gen;
-    gen.seed();
+    //gen.seed();
     //loop_menu();
     return 0;
 }
