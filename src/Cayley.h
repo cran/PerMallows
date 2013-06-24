@@ -20,9 +20,10 @@ protected:
 //    int n_;
     long double **stirling_matrix_;
     long double *facts_;
+    int *sigma_inv_ ;
    
         
-    int get_most_prob_cycle(int ind, int**cycles, int len, int*leng_cycles);
+//    int get_most_prob_cycle(int ind, int**cycles, int len, int*leng_cycles);
     
     double calculate_psi( double*theta, double*psi_vector);
     
@@ -30,11 +31,11 @@ protected:
     
     void get_x_lower_bound(int m, int** sample, int ini_pos, int*x_min_bound);
     
-    int* generate_permu_with_k_cycles(int n, int k);
+    void generate_permu_with_k_cycles(int n, int k, int*sigma);
     
     bool same_cycle(int i, int j, int*sigma);
     
-    bool item_closes_cycle(int pos, int item, int* sigma, int * sigma_inv);
+//    bool item_closes_cycle(int pos, int item, int* sigma);    int which_item_closes_cycle(int*sigma_inv, int pos);
 
     void get_max_item_in_future_cycles(int*sigma, int i, int j, int*max_i, int*max_j);
     void get_max_item_in_current_cycle(int*sigma, int i, int*max_i );
@@ -109,10 +110,11 @@ public:
 
     Cayley(int ns){
         n_=ns;
+        sigma_inv_ = new int [ n_ ];
         //Generic gen;
         //gen.seed();
         stirling_matrix_ = new long double *[n_+1];
-        facts_ = new long double[n_+1];
+        facts_ = new long double[ n_ + 1 ];
         //for (int i = 0 ; i < n_+1; i ++ )
         for (int i = 0 ; i < n_+1; i ++ ){
             stirling_matrix_[ i ]  = new long double [n_+1];
@@ -124,37 +126,63 @@ public:
         for (int i = 0 ; i <= n_; i ++){
             stirling_matrix_[ i ][ i ] = 1;
             stirling_matrix_[ i ][ 0 ] = 0;
-            if ( i > 0 ) stirling_matrix_[ i ][ 1 ] = facts_[ i - 1 ];////
+            if ( i > 0 ) stirling_matrix_[ i ][ 1 ] = facts_[ i - 1 ];
         }
         for (int i = 2 ; i <= n_; i ++)
             for (int j = 2 ; j < i ; j++)
                 stirling_matrix_[ i ][ j ] = stirling_matrix_[ i - 1 ][ j - 1 ] + (i - 1) * stirling_matrix_[ i - 1 ][ j ];
-      
     }
 
     ~Cayley(){
         for (int i = 0 ; i < n_+1; i ++ ) delete [] stirling_matrix_[ i ];
         delete [] stirling_matrix_;
         delete [] facts_;
+        delete [] sigma_inv_;
     };
     
     int get_cycles(int*sigma, int*cycle_items, int*cycle_indices);
     
     void random_sample_at_dist_d(int d, int m, int**samples);
     
-    void x_vector_to_permutation_backwards_old(int*x, int*permu);
+    void x_vector_to_permutation_backwards(int*x, int*sigma);
+    
+    void x_vector_to_permutation_forward(int*x, int*sigma);
     
     long double count_permus_with_cycles(int d);
     
-    void print_stirling_matrix();
-        
     int distance_to_sample(int** samples, int m, int* sigma);
-    
         
     long double count_permus_by_x(int*x);
 
-
+   
 
 
 };
 #endif /* defined(__perms_mallows__Cayley__) */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

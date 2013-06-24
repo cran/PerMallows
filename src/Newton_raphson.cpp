@@ -40,7 +40,7 @@ double Newton_raphson::Newton_raphson_method( double dAvg_val, double initialGue
     j_index_ = j_index; // for kendall GMM
     model_ =  model;
     dist_avg_=dAvg_val;
-    UPPER_THETA=7;
+    UPPER_THETA=5;
     distance_id_=distanceModel_val;
     double theta;
     //TEST //for (double i = -5.1 ; i< 5.1 ; i++) cout<<"Theta "<<i<< " f: "<<f(i)<<" dev: "<<fdev(i)<<endl;
@@ -125,7 +125,7 @@ double Newton_raphson::rtsafe(double x1, double x2, double xacc) {
         
         //cout<<"j_index: "<<j_index_<<" dist_avg_: "<<dist_avg_<<" rts: "<<rts<<" Function val: "<<f<<" f_dev "<<df<<endl;
     }
-    //cout << "Maximum number of iterations exceeded in rtsafe" << endl;
+  //  cout << "Maximum number of iterations exceeded in rtsafe" << endl;
     
     return 0.0; //Never get here.
 }
@@ -159,32 +159,33 @@ double Newton_raphson::f(double theta) {
         //cout<<"trace theta :"<<theta<<" fval "<<dist_avg_<<" "<<a<<" "<<b<<endl;
         return dist_avg_ + a - b;
     }else if(distance_id_ == ULAM_DISTANCE){
-        long double numer = 0, denom = 0;
+        double numer = 0, denom = 0;
         for (int d = 0 ; d < n_ - 1; d++){
-            long double aux = count_[d ] * exp(-theta *d ) ;
+            double aux = count_[d ] * exp(-theta *d ) ;
             numer += aux * d;
             denom += aux;
         }
         return numer / denom - dist_avg_;
     }else if (distance_id_ == HAMMING_DISTANCE && model_ == MALLOWS_MODEL ){
         Generic gen;
-        long double     x_j = 0 , sum_to_n = 0 , sum_to_n_1 = 0 , psi = 0 , psi_der = 0, f_fligner =0;
+        long double     x_j = 0 , sum_to_n = 0 , sum_to_n_1 = 0 , psi = 0 , psi_der = 0;
         for ( int j = 0 ; j <= n_ ; j++ ){
             x_j = (long double) pow(exp(theta)-1, j) / facts_[ j ];
             if ( j < n_ ) sum_to_n_1 += x_j;
             sum_to_n += x_j;
-            //if(sum_to_n> DBL_MAX ||sum_to_n != sum_to_n )  return DBL_MAX;
+            if(sum_to_n> DBL_MAX ||sum_to_n != sum_to_n )
+                return DBL_MAX;
         }
         psi = facts_[ n_ ] * exp(-theta * n_ ) * sum_to_n;
         psi_der = - n_ * psi + facts_[ n_ ] * exp( theta * ( 1 - n_ )) * sum_to_n_1;
-        f_fligner = (double)  (psi_der / psi + dist_avg_);
+        double f_fligner = (double)  (psi_der / psi + dist_avg_);
         //cout<<"theta "<<theta<<" dist "<<dist_avg_<<" fu "<<f_fligner<<endl;
-        //if(f_fligner != f_fligner )  f_fligner=0;//trace
+        if(f_fligner != f_fligner )
+            f_fligner=0;//trace
         return f_fligner;
     }else if (distance_id_ == HAMMING_DISTANCE && model_ == GENERALIZED_MALLOWS_MODEL ){
         //cout<<"Solve Weigthed Hamming Mallows with the multivariate newthon Raphson, mnewt "<<endl;
         //exit(1);
-        return -1;
     }
     return 0;
 }
@@ -242,7 +243,6 @@ double Newton_raphson::fdev(double theta) {
     }else if (distance_id_ == HAMMING_DISTANCE && model_ == GENERALIZED_MALLOWS_MODEL ){
         //cout<<"Solve Weigthed Hamming Mallows with Newton_raphson::mle_theta_weighted_mallows_hamming "<<endl;
         //exit(1);
-        return -1;
     }
     return 0;
 }
@@ -380,10 +380,8 @@ void Newton_raphson::frprmn(double p[], int n, double ftol, int *iter, double *f
 			xi[j]=h[j]=g[j]+gam*h[j];
 		}
 	}
-    char str_msg[100];
-    strcpy(str_msg, "Too many iterations in FRPRMN");
-	nrerror(str_msg);
-
+    //char str_msg[100];strcpy(str_msg, "Too many iterations in FRPRMN");nrerror(str_msg);
+    //ERROR
 }
 
 #undef ITMAX 
@@ -559,8 +557,7 @@ double Newton_raphson::brent(double ax,double bx,double cx,double (Newton_raphso
 	int iter;
 	double a,b,d,etemp,fu,fv,fw,fx,p,q,r,tol1,tol2,u,v,w,x,xm;
 	double e=0.0;
-	//void nrerror();
-    
+	  
 	a=((ax < cx) ? ax : cx);
 	b=((ax > cx) ? ax : cx);
 	x=w=v=bx;
@@ -611,10 +608,8 @@ double Newton_raphson::brent(double ax,double bx,double cx,double (Newton_raphso
                         }
                 }
 	}
-    char str_msg[100];
-    strcpy(str_msg,"Too many iterations in BRENT");
-	nrerror(str_msg);
-
+    //char str_msg[100];strcpy(str_msg,"Too many iterations in BRENT");nrerror(str_msg);
+//ERROR
 	*xmin=x;
 	return fx;
 }
@@ -711,9 +706,7 @@ double Newton_raphson::dbrent(double ax, double bx, double cx, double (Newton_ra
                         }
                 }
 	}
-    char str_msg[100];
-    strcpy(str_msg, "Too many iterations in routine DBRENT");
-	nrerror(str_msg);
+    //ERROR char str_msg[100];strcpy(str_msg, "Too many iterations in routine DBRENT");nrerror(str_msg);
     return 0;
 }
 
@@ -761,7 +754,6 @@ void Newton_raphson::nrerror(char error_text[])
 	//fprintf(stderr,"%s\n",error_text);
 	//fprintf(stderr,"...now exiting to system...\n");
 	//exit(1);
-  return;
 }
 
 double *Newton_raphson::vector(long nl, long nh)
@@ -771,10 +763,7 @@ double *Newton_raphson::vector(long nl, long nh)
     
 	v=(double *)malloc((size_t) ((nh-nl+1+NR_END)*sizeof(double)));
 	if (!v) {
-        char str_msg[100];
-        strcpy(str_msg, "allocation failure in vector()");
-        nrerror(str_msg);
-
+        //ERRORchar str_msg[100];strcpy(str_msg, "allocation failure in vector()");nrerror(str_msg);
     }
 	return v-nl+NR_END;
 }

@@ -7,17 +7,16 @@
 //
 
 #include "Generic.h"
-#include "Hamming.h"
-#include "Cayley.h"
-#include "Ulam.h"
-#include "Kendall.h"
-#include "Ulam_disk.h"
-
 #include <unistd.h>
 #include <fcntl.h>
 #include <algorithm>
 #include <cmath>
 #include <ctime>
+#include "Hamming.h"
+#include "Cayley.h"
+#include "Ulam.h"
+#include "Kendall.h"
+#include "Ulam_disk.h"
 #include <R.h>
 
 Exponential_model* Generic::new_instance(int distance_id, int n){
@@ -31,14 +30,13 @@ Exponential_model* Generic::new_instance(int distance_id, int n){
 
 void Generic::elementary_symmetric_polynomial(double* theta, int n, long double*theta_exp_aux, long double **esp_aux, long double *esp){
     //esp[j][n]: j-th elementarySymmetricPolynomials of n items
-    //theta_exp_aux , esp_aux: are defined outside because the learning process (NewtonRaphson) calles this func lots of times
+    //theta_exp_aux , esp_aux: are defined outside because the learning process (NewtonRaphson) calls this func lots of return;
+
     for ( int i = 0 ; i < n ; i ++ ){
-        //aux_esp_[ i ] = new long double[ n + 1 ];
         for ( int j = 0 ; j <= n ; j ++) esp_aux[i][j]=0;
         theta_exp_aux[ i + 1 ] = (long double)exp( theta[ i ]) - 1 ;
     }
     for ( int j = 0 ; j <= n ; j ++) esp_aux[ n ][ j ] = 0;
-    //for ( int j = 0 ; j <= n ; j ++) aux_esp_[ 0 ][ j ] = 1;
     for ( int j = 1 ; j <= n ; j ++)
         for ( int k = 1 ; k<= j ; k ++)
             esp_aux[ 1 ][ j ] += theta_exp_aux[ k ];//la suma de los primeros
@@ -80,78 +78,26 @@ void Generic::freq_matrix(int **samples, int m, int n, int **freq){
             freq[ i ][ samples[ s ][i] - 1] ++;
 }
 
-void Generic::print_freq_matrix(int **samples, int m, int n){
-    int**freq = new int*[n];
-    for (int i = 0 ; i < n ; i ++){
-        freq[i] = new int[ n ];
-        for (int j = 0 ; j < n ; j ++)
-            freq[ i ][ j ] = 0;
-    }
-    for (int s = 0;  s < m; s++)
-        for (int i = 0;  i < n; i ++)
-            freq[ i ][ samples[ s ][i] - 1] ++;
-    print_int_matrix(freq , n , n );
-    for (int i = 0 ; i < n ; i ++) delete [] freq[ i ];
-    delete [] freq;
-}
-
-int**Generic::read_sample_file(int n, int m, char*path){
-    ifstream  file;
-    int**sample=new int*[m];
-    for(int i=0;i<m;i++) sample[i]=new int[n];
-    file.open(path);
-    if(!((file )))
-    {
-        //cout << "Cannot read input file: "<<path<<endl;
-        //exit(1);
-        return NULL;
-    }
-    for(int i=0;i<m;i++)
-        for(int j=0;j<n;j++)
-            file >> sample[i][j];
-    return sample;
-}
-
-void Generic::print_long_double_matrix(long double**matrix, int n, int m){
-    for(int i=0;i<n;i++){
-        //for(int j=0;j<m;j++)cout<<matrix[i][j]<<" ";
-        //cout<<endl;
-    }
-}
-void Generic::print_int_matrix(int**matrix, int n, int m){
-    for(int i=0;i<n;i++){
-        //for(int j=0;j<m;j++)cout<<matrix[i][j]<<"\t";
-        //cout<<endl;
-    }
-}
-void Generic::print_double_matrix(double**matrix, int n, int m){
-    for(int i=0;i<n;i++){
-        //for(int j=0;j<m;j++)cout<<matrix[i][j]<<" ";
-        //cout<<endl;
-    }
-}
-void Generic::print_int_vector(int*vec, int n){
-    //for(int j=0;j<n;j++)cout<<vec[j]<<" ";
-    //cout<<endl;
-}
-void Generic::print_double_vector(double*vec, int n){
-    //for(int j=0;j<n;j++)cout<<vec[j]<<" ";
-    //cout<<endl;
-}
-void Generic::print_float_vector(float *vec, int n){
-    //for(int j=0;j<n;j++)cout<<vec[j]<<" ";
-    //cout<<endl;
-}
 void Generic::generate_random_permutation(int len, int first_item_in_perm, int*sigma){
-    //implements knuth shuffle
+    //implements knuth shuffle (Fisher–Yates shuffle)
     //other option is to code Feller coupling
     for(int i=0;i<len;i++) sigma[i]=i+first_item_in_perm;
     for(int i=0;i<len-1;i++){
         //int pos = rand() % (len-i) + i;
-        int pos = (int) (unif_rand() * (len-i)) + i;
+        int pos = (int) (unif_rand() * (len-i) + i);
         int aux= sigma[i];
         sigma[i]=sigma[pos];
         sigma[pos]=aux;
+    }
+}
+void Generic::random_shuffle(int len, int*array){
+    //implements knuth shuffle (Fisher–Yates shuffle)
+    for(int i=0;i<len-1;i++){
+        //int pos = rand() % (len-i) + i;
+        int pos = (int) (unif_rand() * (len-i) + i);
+        int aux= array[i];
+        array[i]=array[pos];
+        array[pos]=aux;
     }
 }
 void Generic::compose(int n, int*s1, int*s2, int*res){
@@ -190,14 +136,7 @@ void Generic::get_permu_matrix(int n,int*sigma, int**matrix){
     for(int i=0;i<n;i++) for(int j=0;j<n;j++) matrix[i][j]=0;
     for(int i=0;i<n;i++) matrix[i][sigma[i] - FIRST_ITEM ] = 1;
 }
-void Generic::print_permus(int n){
-    int * permu = new int[ n ];
-    for(int i = 0 ; i < n ; i++) permu[ i ] = i + FIRST_ITEM;
-    sort(permu, permu + n);
-    do{
-        print_int_vector(permu, n);
-    } while (next_permutation(permu, permu + n));
-}
+
 long double Generic::factorial(int val) {
     if(val <= 0) return 1;
     //long  N, b, c, p; // use int for fast calculation and small range of calculation..
@@ -238,8 +177,7 @@ void Generic::init_factorials (int n) {
 long double Generic::count_permus_with_at_least_k_unfixed_points(int n, int k){
     if ( facts_ == NULL ) {
         init_factorials(n);}
-    else if (facts_n_ < n )
-        return -1;//{cout<<"Check n in Generic::count_permus_no_fixed_points. ";exit(0);}
+    //else if (facts_n_ < n ) {cout<<"Check n in Generic::count_permus_no_fixed_points. ";exit(0);}
     long double  sum = 0 , aux = 0 ;
     int     multi = -1 ;
     for(int i = 1 ; i <= k ; i++){
@@ -271,7 +209,7 @@ bool Generic::valid_permutation(int*sigma, int n){
     return true;
 }
 
-void Generic::riffle_shuffle(int n, int m, int times, int *sigma, int **shuffle){
+/*void Generic::riffle_shuffle(int n, int m, int times, int *sigma, int **shuffle){
     // implements gilbert shannon reeds shuffle
     int l,  l_min = 0,  l_max;
     int r,  r_min,      r_max = n;
@@ -290,7 +228,7 @@ void Generic::riffle_shuffle(int n, int m, int times, int *sigma, int **shuffle)
         for (int cont_times = 0 ; cont_times < times ; cont_times++) {
             l_min = 0; r_max = n ; cont = 0 ;
             //ran = (double) rand() / (RAND_MAX ) ;
-            ran = unif_rand();
+            
             ran *= pow(2, (double)n);
             center =  0;
             while (acumul[ center ] < ran) center++;
@@ -300,8 +238,7 @@ void Generic::riffle_shuffle(int n, int m, int times, int *sigma, int **shuffle)
             l = l_max - l_min;
             r = n - l ;
             while (l > 0 && r > 0){
-                //ran_int = rand() %(l + r );
-                ran_int = (int) (unif_rand() * (l + r ));
+                ran_int = rand() %(l + r );
                 if (ran_int < l) {
                     shuffle[ i ][ cont ] = aux[ l_min ];
                     l_min ++;
@@ -329,7 +266,7 @@ void Generic::riffle_shuffle(int n, int m, int times, int *sigma, int **shuffle)
     delete [] aux;    
 }
 
-/*void Generic::seed(void) {
+void Generic::seed(void) {
     int fd, buf;
     if ((fd = open("/dev/urandom", O_RDONLY)) < 0) {
         perror("/dev/urandom");

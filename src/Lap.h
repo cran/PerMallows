@@ -19,8 +19,8 @@
 
 
 #include <iostream>
-#include <stdio.h>
 #include <ctime>
+#include <stdio.h>
 /*************** CONSTANTS  *******************/
 
 #define BIG 100000

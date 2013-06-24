@@ -5,13 +5,11 @@
 //  Created by Ekhine Irurozki on 08/07/13.
 //  Copyright (c) 2013 Ekhine Irurozki. All rights reserved.
 //
-
+#include <R.h>
 #include "Ulam.h"
 
 #include <vector>
-#include <R.h>
 #include <set>
-
 double Ulam::probability(int *s, int *s_0, double * theta){
     int dist = distance(s, s_0);
     double *proba = new double[ n_ ];
@@ -50,40 +48,7 @@ int Ulam::longest_increasing_subsequence(int*sigma){
         }
     }
     return L;
- /*
-    //alex
-  int i;
-    vector<int> vc(1,sigma[0]);
-    vector<int>::iterator vk;
-    
-    for (i=1;i<n_;i++){
-        for (vk=vc.begin(); vk != vc.end(); vk++)
-            if (*vk>=sigma[i]) break;
-        if (vk==vc.end())
-            vc.push_back(sigma[i]);
-        else *vk=sigma[i];
-    }
-    
-//    if ( L != (int)vc.size() )cout<<"ERROR LIS"<<endl;
-    return (int)vc.size();
-  */
-    
-    // O(n log k)
-    // http://comeoncodeon.wordpress.com/2009/08/12/longest-increasing-subsequence-lis/
-/*    vector<int> A;
-    for(int i = 0 ; i < n_ ; i ++)
-        A.push_back(sigma[i]);
-    int i;
-    set<int> s;
-    set<int>::iterator k;
-    for (i=0;i<n_;i++){
-        if (s.insert(A[i]).second){
-            k = s.find(A[i]);
-            k++;
-            if (k!=s.end())      s.erase(k);
-        }
-    }
-    return (int)s.size();*/
+ 
 }
 
 int Ulam::distance(int *s1, int *s2){
@@ -117,7 +82,7 @@ int Ulam::gen_part_next(unsigned char *vector, unsigned char *k, int bound){
     int        temp;  //auxiliary element
     
     //easy case
-    if(j >= 0 && vector[j] == 2){
+    if(j >= 0 && vector[j] == 2){ // j >= 0 &&  mod to avoid illegal read
         vector[j] = 1;
         j--;
         (*k)++;
@@ -155,39 +120,6 @@ int Ulam::gen_part_next(unsigned char *vector, unsigned char *k, int bound){
         return (GEN_TERM);
     }*/
     return(GEN_NEXT);
-}
-
-int Ulam::integer_partitions(int n){
-    /*ZS1: Zoghbi, Antoine and Stojmenovic, Ivan: Fast Algorithms for Generating Integer Partitions. International Journal of Computer Mathematics, 70, 1998, 319-332.*/
-    unsigned char k;                  //length of figures
-    unsigned char *vector     = NULL; //where the current figure is stored
-    int           gen_result;         //return value of generation functions
-    unsigned int  set_counter;        //counting generated subsets
-    int           x;                  //iterator
-    
-    //alloc memory for vector
-    vector = (unsigned char *)malloc(sizeof(unsigned char) * n);
-    if(vector == NULL){
-        //fprintf(stderr, "error: insufficient memory\n");
-        //exit(EXIT_FAILURE);
-        return -1;
-    }
-    set_counter = 0;
-    //printf("part(%u)\n", n);
-    //initialize
-    gen_result = gen_part_init(vector, n, &k);
-    if(gen_result == GEN_EMPTY){
-        set_counter++;
-        //printf("{} (%u)\n", set_counter);
-    }
-    //generate all successors
-    while(gen_result == GEN_NEXT){
-        set_counter++;
-        //for(x = 0; x < k; x++)printf("%u ", vector[x]);
-        //printf("(%u)\n", set_counter);
-        gen_result = gen_part_next(vector, &k, 0);
-    }
-    return(EXIT_SUCCESS);
 }
 
 void Ulam::random_sample_at_dist(int dist, int m, int **samples){
@@ -233,7 +165,7 @@ void Ulam::estimate_theta(int m, int *sigma_0, int **samples, int model, double 
     Newton_raphson newton(n_);
     fill_shapes_of_n();
     int dist_avg = distance_to_sample(samples, m, sigma_0);
-    *theta = newton.Newton_raphson_method( (double)dist_avg/m, -1.001,ULAM_DISTANCE, NULL, MALLOWS_MODEL, num_permus_per_dist_);
+    *theta = newton.Newton_raphson_method( (double)dist_avg/m, -1.001,ULAM_DISTANCE, MALLOWS_MODEL, -1, num_permus_per_dist_);
 }
 
 long double Ulam::get_likelihood(int m, int** samples, int model, int * sigma_0) {
@@ -244,7 +176,7 @@ long double Ulam::get_likelihood(int m, int** samples, int model, int * sigma_0)
 
     fill_shapes_of_n();
     dist_avg = distance_to_sample(samples, m, sigma_0);
-    theta    = newton.Newton_raphson_method( (double)dist_avg/m, -1.001,ULAM_DISTANCE, NULL, MALLOWS_MODEL, num_permus_per_dist_);
+    theta    = newton.Newton_raphson_method( (double)dist_avg/m, -1.001,ULAM_DISTANCE, MALLOWS_MODEL, -1, num_permus_per_dist_);
     for (int i = 0 ; i < n_ ; i ++ ) psi += num_permus_per_dist_[ i ] * exp (-theta * i );
     likelihood = - dist_avg * theta - m* log ( psi );
     return likelihood;
@@ -280,9 +212,8 @@ void Ulam::fill_shapes_of_n(){
         //alloc memory for vector
         /*vector = (unsigned char *)malloc(sizeof(unsigned char) * n_ );
         if(vector == NULL)    {
-            //fprintf(stderr, "error: insufficient memory\n");
-            //exit(EXIT_FAILURE);
-            return;
+            fprintf(stderr, "error: insufficient memory\n");
+            exit(EXIT_FAILURE);
         }*/
         vector = new unsigned char [ n_ ];
         Ferrers_diagram*f;
@@ -309,14 +240,15 @@ void Ulam::fill_shapes_of_n(){
             cont ++;
             gen_result = gen_part_next(vector, &k, 0);
         }
-        //free(vector);
         delete [] vector;
+        //free(vector);
     }
 }
 
 
 
 void Ulam::generate_permu_with_given_LIS(int l, int *sigma){//TODO cambiar a 2 syt como out-param
+    //STEP 1
     int     d = n_ - l;
     int     to_insert;
     int     col, row, aux, new_col, new_row;
@@ -324,14 +256,15 @@ void Ulam::generate_permu_with_given_LIS(int l, int *sigma){//TODO cambiar a 2 s
     long double fs_index ;//ferrer shape index
     int fs_length;//ferrer shape len
     //double permus = (double)rand() / (double)(RAND_MAX) * num_permus_per_dist_[ d ];
-    double permus = unif_rand()* num_permus_per_dist_[ d ];
+    double permus = unif_rand() * num_permus_per_dist_[ d ];
     fs_index = first_index_at_dist_[ d ];
     while(num_permus_at_shape_acumul_[ fs_index ] <= permus){
         fs_index++;
         //cout<<num_permus_at_shape_acumul_[ target_shape ]<<endl;
     }
-    
     fs_length = shapes_of_n_->at(fs_index)->get_ferrers_shape_length();
+    
+    //STEP 2
     int* shape1 = new int [fs_length];//member of f1
     int* shape2 = new int [fs_length];
     for (int i = 0 ; i < shapes_of_n_->at(fs_index)->get_ferrers_shape_length() ; i ++){
@@ -342,10 +275,12 @@ void Ulam::generate_permu_with_given_LIS(int l, int *sigma){//TODO cambiar a 2 s
     Ferrers_diagram* f2 = new Ferrers_diagram(n_   , shape2 , fs_length);
     
     f1->random_SYT();
-    f2->random_SYT();    
+    f2->random_SYT();
+    
+    
+    //STEP 3
     int ** tableau1 = f1->get_syt();//
     int ** tableau2 = f2->get_syt();
-    
     for (int i = 0 ; i < f2->get_ferrers_shape_length() ; i++){
         for (int j =  0 ; j < f2->get_ferrers_shape()[i] ; j++) {
             row_index[ tableau2[ i ][ j ] - 1 ] = i;
@@ -377,13 +312,13 @@ void Ulam::generate_permu_with_given_LIS(int l, int *sigma){//TODO cambiar a 2 s
 //        gen.print_int_matrix(tableau1, f1->get_num_rows(), f1->get_num_cols());
 //        gen.print_int_matrix(tableau2, f1->get_num_rows(), f1->get_num_cols());
     }
+    
+    
     delete [] col_index;
     delete [] row_index;
     delete f1;
     delete f2;
 }
-
-
 
 void Ulam::distances_sampling(int m, double theta, int **samples){
     double  distance_acum = 0, rand_distance = 0;
@@ -397,7 +332,7 @@ void Ulam::distances_sampling(int m, double theta, int **samples){
         proba_acumul[i] = num_permus_per_dist_[i] * exp ( -theta * i ) + proba_acumul[ i - 1 ];
     for (int i = 0 ; i < m ; i ++){
         //rand_distance = (double) rand() / (double)(RAND_MAX) * proba_acumul[ n_ - 1 ];
-        rand_distance = unif_rand() * proba_acumul[ n_ - 1 ];
+        rand_distance = unif_rand()* proba_acumul[ n_ - 1 ];
         target_distance = 0;
         while(proba_acumul[ target_distance ] <= rand_distance) target_distance++;
         samples[ i ] = new int[ n_ ];
@@ -424,17 +359,14 @@ void Ulam::gibbs_sampling(int m, double *theta, int model, int **samples){
         int a;
         int b;
         do {
-            //a = rand() % ( n_ );
-            //b = rand() % ( n_ );
-            a = (int) (unif_rand() * n_);
-            b = (int) (unif_rand() * n_);
+            a = (int) (unif_rand() * n_);//rand() % ( n_ );
+            b = (int) (unif_rand() * n_);//rand() % ( n_ );
         }while (a == b);
         gen.insert_at(sigma, n_ , a , b , sigma_prime);
         bool make_swap = false;
         if(  distance(sigma) > distance(sigma_prime) )  make_swap = true;
         else{
-            //double rand_double = (double)rand()/RAND_MAX;
-            double rand_double = unif_rand();
+            double rand_double = unif_rand();//(double)rand()/RAND_MAX;
                 if(rand_double < exp(-theta[0])) make_swap = true;
         }
         if(make_swap){
@@ -487,38 +419,5 @@ void Ulam::calculate_probas_at_each_distance(double theta, double *proba){
         proba[i] = num_permus_per_dist_[i] * exp ( -theta * i ) + proba[ i - 1 ];
     ///end
     
-}
-
-int Ulam::get_lower_bound_sum_of_LIS(int **samples, int m){
-    Generic gen;
-    int**freq = new int*[ n_ ];
-    int**dyn_progr_LIS = new int*[ n_ ];
-    for (int i = 0 ; i < n_ ; i ++) {freq[ i ] = new int[ n_ ]; for (int j = 0 ; j < n_ ; j ++) freq[ i ][ j ] =  0 ;}
-    for (int i = 0 ; i < n_ ; i ++) {dyn_progr_LIS[ i ] = new int[ n_ ]; for (int j = 0 ; j < n_ ; j ++) dyn_progr_LIS[ i ][ j ] = 0 ;}
-    for ( int i = 0 ; i < m ; i ++)
-         for (int j = 0 ; j < n_ ; j ++)
-             freq[ j ][ samples[ i ][ j ] - 1 ] ++;
-    
-    for (int i = 0 ; i < n_ ; i ++)
-        for ( int j = 0 ; j < n_ ; j ++){
-            int i_1 = i != 0 ? dyn_progr_LIS[ i - 1 ][ j ] : 0 ;
-            int j_1 = j != 0 ? dyn_progr_LIS[ i ][ j - 1 ] : 0 ;
-            int max = i_1 > j_1 ? i_1 : j_1;
-            dyn_progr_LIS[ i ][ j ] = max + freq[i][j];
-        }
-    
-    //cout<<"freq"<<endl;
-    //gen.print_int_matrix(freq, n_, n_);
-    //cout<<"dynProgra"<<endl;
-    //gen.print_int_matrix(dyn_progr_LIS, n_, n_);
-    //cout<<" lower bound "<<dyn_progr_LIS[n_ - 1 ][n_ - 1];
-    //cout<<"naive lis "<<endl;
-//    naive_lis(samples, m);
-    
-    for (int i = 0 ; i < n_ ; i ++) delete [] freq[ i ];
-    delete [] freq;
-    for (int i = 0 ; i < n_ ; i ++) delete [] dyn_progr_LIS[ i ];
-    delete [] dyn_progr_LIS;
-    return dyn_progr_LIS[n_ - 1 ][n_ - 1];
 }
 

@@ -9,11 +9,11 @@
 #include "Hamming.h"
 #include "Generic.h"
 #include "Lap.h"
-#include "Newton_raphson.h"
-
 #include <cmath>
 #include <float.h>
+#include "Newton_raphson.h"
 #include <R.h>
+
 
 double Hamming::probability(int *s, int *s_0, double *theta){
     double  pro = 0;
@@ -53,7 +53,7 @@ void Hamming::random_derangement(int n, int *sigma){
         int*deran = new int[ n - 2 ], *conv = new int[n-1];
         random_derangement( n - 2 , deran );
         //int ran = rand() % (n - 1 );
-        int ran = (int) (unif_rand() * (n - 1 ));
+        int ran =(int)( unif_rand() * (n - 1 ));
         int j = 0;
         for (int i= 0; i < n-1 ; i ++)
             if ( i != ran ) conv[j++] = i+1;
@@ -144,7 +144,7 @@ void Hamming::distances_sampling(int m, double theta, int **samples){
     for( int i = 0 ; i < m ; i++ ){
         target_dist = 0;
         //rand_val = (long double) acumul[ d_max ] * (double) rand() / RAND_MAX;
-        rand_val = (long double) (acumul[ d_max ] * unif_rand());
+        rand_val = (long double) acumul[ d_max ] * unif_rand();
         while ( acumul[ target_dist ] <= rand_val ) target_dist ++;
         int *sigma = new int[ n_ ];
         random_permu_at_dist_d( target_dist , sigma);
@@ -156,30 +156,29 @@ void Hamming::distances_sampling(int m, double theta, int **samples){
 }
 
 double Hamming::psi_whm_reverse(double*theta){
+    //oposite meaning of h_j (como el de Fligner)
+    Generic     gen;
     long double res = 0 ;
-    Generic gen;
-    long double *esp = new long double [ n_ + 1 ];
-    double * theta_inv = new double [ n_ ];
+    long double * esp    = new long double [ n_ + 1 ];
+    double      * theta_inv = new double [ n_ ];
     for ( int k = 0 ; k < n_ ; k ++) theta_inv[ k ] = -theta[ k ];
     gen.elementary_symmetric_polynomial( theta_inv, n_, t_, aux_esp_, esp );
-    //gen.init_factorials( n_ );
-    for ( int k = 0 ; k <= n_ ; k ++){
-        res += g_n_[ n_ ][k] * esp[k];//gen.count_permus_with_at_least_k_unfixed_points(n_,k)
-    }
+    for ( int k = 0 ; k <= n_ ; k ++)
+        res += g_n_[ n_ ][k] * esp[k];
     delete [] esp;
     delete [] theta_inv;
     return res;
 }
 
 double Hamming::psi_whm(double*theta){
+    Generic     gen;
     long double res = 0 , sum_theta = 0;
-    Generic gen;
     long double *esp = new long double [ n_ + 1 ];
     for ( int k = 0 ; k < n_ ; k ++) sum_theta += theta[ k ];
     gen.elementary_symmetric_polynomial( theta, n_, t_, aux_esp_,esp );
-    for ( int k = 0 ; k <= n_ ; k ++){
+    for ( int k = 0 ; k <= n_ ; k ++)
         res += facts_[ n_ - k ] * esp[k];
-    }
+    
     delete [] esp;
     return (res * exp( -sum_theta ));
 }
@@ -249,14 +248,14 @@ long double Hamming::compute_marginal_iterative(int *h , double * theta, int  ma
         theta_acum_not_in_A = 0;
         b_ = 0 ;
         for (int i = 0 ; i < n_ ; i++ ){
-            theta_acum_not_in_A += theta[ i ];
+            theta_acum_not_in_A += (long double) theta[ i ];
             esp_red_[ i ] = esp_ini_[ i ];
         }
         esp_red_[ n_ ] = esp_ini_[ n_ ];
     }
     if ( current_var > 0 ){
         if( h[ current_var - 1 ] == 0 )
-            theta_acum_not_in_A -= theta[ current_var - 1];//the set of fixed points is A. If the last position was sampled as Unfix , update set
+            theta_acum_not_in_A -= (long double) theta[ current_var - 1];//the set of fixed points is A. If the last position was sampled as Unfix , update set
         else
             b_ ++;//otherwise, (current_var-1) \in B
     }
@@ -277,10 +276,10 @@ long double Hamming::compute_marginal_iterative(int *h , double * theta, int  ma
         res +=  g_n_[n_ -a - num_vars][ b_ ] * esp_red_[num_vars]; // iter k= num_vars
     
     result = (long double) exp( - theta_acum_not_in_A + theta[ current_var ] )* res;
-    /*if ( result < 0 ){
-        cout<<"Negative marginal probability, maybe theta is too large?"<<endl;
-        exit(0);
-    }*/
+    if ( result < 0 ){
+        //cout<<"ERROR Negative marginal probability, maybe theta is too large?"<<endl;
+        //exit(0);
+    }
     return result;
 }
 
@@ -356,10 +355,8 @@ void Hamming::gibbs_sampling(int m, double *theta, int model, int **samples){
     for ( int sample = 0 ; sample < m + burning_period_samples ; sample ++){
         int i, j;
         do{
-            //i = rand() % (n_);
-            //j = rand() % (n_);
-            i = (int) (unif_rand() * n_);
-            j = (int) (unif_rand() * n_);
+            i = (int) (unif_rand() * n_);//rand() % (n_);
+            j = (int) (unif_rand() * n_);//rand() % (n_);
         }while ( i == j );
         h_i     = (i == sigma[i] - 1) ? 0 : 1 ;
         h_j     = (j == sigma[j] - 1) ? 0 : 1 ;
@@ -384,15 +381,9 @@ void Hamming::gibbs_sampling(int m, double *theta, int model, int **samples){
 
 int Hamming::distance_to_sample(int **samples, int m, int *sigma){
     int dist= 0;
-    //int *comp = new int[ n_ ], *sigma_inv = new int[ n_ ];
-    //for(int j = 0 ; j < n_ ; j ++) sigma_inv[sigma[ j ] - 1 ] = j + 1;
     for(int s = 0 ; s < m ; s ++){
-        //for(int i = 0 ; i < n_ ; i ++) comp[ i ] = samples[ s ][ sigma_inv [ i ] - 1 ];
-        for ( int i = 0 ; i < n_ ; i ++) if(samples[ s ][ i ] != sigma[ i ]) dist ++; //if(sigma[i] != i + 1) sum ++;
-        //dist += distance(comp);
+        for ( int i = 0 ; i < n_ ; i ++) if(samples[ s ][ i ] != sigma[ i ]) dist ++;
     }
-    //delete []sigma_inv;
-    //delete []comp;
     return dist;
 }
 
@@ -418,142 +409,6 @@ void Hamming::estimate_consensus_exact_mm(int m, int**samples, int*sigma){
     delete [] freq;
 }
 
-/*double Hamming::estimate_consensus_exact_gmm_core(int m, int **freq ,int * max_index_in_col, double * h_avg, int *sigma_0, int*sigma_0_inv, int pos, double previous_likelihood, double *best_likelihood, int *best_sigma_0){
-    Generic gen;
-    //TODO mejorar la cota pal resto
-    long double nodes = 1;
-    if ( pos == n_ && ( *best_likelihood < previous_likelihood || *best_likelihood == 0) ) {
-        cout<<"leafBEST: lik, bestL "<<previous_likelihood<<" "<<*best_likelihood<<endl;
-        *best_likelihood = previous_likelihood;
-        for (int i = 0 ; i < n_ ; i++) best_sigma_0[ i ] = sigma_0[ i ];
-        //for (int i = 0 ; i < n_ ; i++) cout<< sigma_0_inv[ i ]<<" ";cout<<"sigma_o"<<endl;
-
-    }else{
-        Newton_raphson nr(n_);
-        long double  likelihood, a1;
-        int     * max_index_in_col_bounded = new int[ n_ ];
-        double  * theta = new double[ n_ ];
-        double  * h_avg_bounded = new double [n_ ];
-        for (int item = 0 ; item < n_ ; item ++){
-            if (sigma_0[ item ] == -1 ) {//
-                sigma_0_inv[ pos ] = item + FIRST_ITEM;
-                sigma_0[ item ] = pos + FIRST_ITEM;
-                if(sigma_0[0]==2&&sigma_0[1]==1&&sigma_0[2]==3&&sigma_0[3]==4){
-                    bool traza = true;
-                }
-                bound_consensus (m, pos, freq, sigma_0, sigma_0_inv, h_avg, max_index_in_col, h_avg_bounded, max_index_in_col_bounded);
-                nr.mle_theta_weighted_mallows_hamming( m , h_avg_bounded, theta);
-                a1 = 0 ;
-                for ( int i = 0 ; i < n_ ; i++) a1 += h_avg_bounded[ i ] * theta[ i ] ;
-                likelihood = (long double)-m * (a1 + (long double)log (psi_whm(theta)));
-                if ((previous_likelihood < likelihood) && abs(previous_likelihood - likelihood)>0.0001 && previous_likelihood != 0 ){
-                    cout<<"ERROR likeli must decrease down tree "<<pos<<" "<<previous_likelihood<<" "<<likelihood<<" "<<previous_likelihood - likelihood<<" "<<*best_likelihood<<endl;
-                }
-     //           if (likelihood >= *best_likelihood || *best_likelihood == 0 ){
-                cout<<"  ";gen.print_int_vector(sigma_0_inv, n_);cout<<"\t\t"<<likelihood<<"\n";
-                cout<<"\t\t";gen.print_double_vector(h_avg_bounded, n_);
-                cout<<"\t\t";gen.print_double_vector(theta, n_);
-                 
-                    nodes += estimate_consensus_exact_gmm_core(m, freq, max_index_in_col_bounded, h_avg_bounded,sigma_0, sigma_0_inv, pos + 1,likelihood, best_likelihood, best_sigma_0);
-       //         }else {
-                  //  cout<<"x ";gen.print_int_vector(sigma_0_inv, n_);cout<<"\t\t"<<likelihood<<"\n";
-                  //  cout<<"\t\t";gen.print_double_vector(h_avg, n_);
-       //         }
-                sigma_0_inv[ pos ] = -1;
-                sigma_0[ item ] = -1;
-                //h_avg[ pos ] = h_min[ pos ];
-            }
-        }
-        delete [] h_avg_bounded;
-        delete [] theta;
-        delete [] max_index_in_col_bounded;
-    }
-    return nodes;
-}
-
-void Hamming::bound_consensus(int m, int pos, int **freq, int *sigma_0, int *sigma_0_inv, double *h_avg, int *max_index_in_col, double *h_avg_bounded, int *max_index_in_col_bounded){
-    for (int i = 0 ; i < pos ; i++) {
-        h_avg_bounded [ i ] =  h_avg[ i ];
-        max_index_in_col_bounded[ i ] = 0;
-    }
-    h_avg_bounded[ pos ] = (double) 1 - (double) freq[ sigma_0_inv[ pos ] - FIRST_ITEM ][ pos ] / m;
-    for (int col = pos+1 ; col < n_ ; col++) {//h_avg_bounded [ i ] =  h_avg[ i ];
-        if (max_index_in_col[ col ] != sigma_0_inv[ pos ]) 
-            max_index_in_col_bounded[ col ] = max_index_in_col[ col ];
-         else{
-                max_index_in_col_bounded[ col ] = -1;
-                for (int row = 0 ; row < n_ ; row++ ){
-                    if ( sigma_0[ row ] == -1 && ( max_index_in_col_bounded[ col ] == -1 || freq[ row ][ col ] > freq[max_index_in_col_bounded[ col ]][ col ] ))
-                        max_index_in_col_bounded[ col ] = row;
-                }
-            }
-        h_avg_bounded[ col ] = (double) 1 - (double) freq[ max_index_in_col[ col ] ] [ col ]/ m;
-        
-    }
-    for (int i = 0 ; i < n_ ; i++)
-        if (h_avg_bounded[ i ] < h_avg[ i ]){//trace
-            cout<<"ERROR: h_avg must increase down tree"<<endl;
-            Generic gen;
-            gen.print_int_vector(sigma_0, n_);
-            gen.print_int_vector(sigma_0_inv, n_);
-            gen.print_double_vector(h_avg, n_);
-            gen.print_double_vector(h_avg_bounded , n_);
-            gen.print_int_vector(max_index_in_col, n_);
-            gen.print_int_vector(max_index_in_col_bounded, n_);
-        }
-}
-
-double Hamming::estimate_consensus_exact_gmm(int m, int **samples, int*sigma_0_ini, int *sigma_0){
-    //return num_nodes
-    Generic gen;
-    int     ** freq             = new int * [ n_ ];
-    int     *  max_index_in_col = new int [ n_ ];
-    int     *  sigma_0_inv      = new int[ n_ ];
-    int     *  sigma_0_iter     = new int[ n_ ];
-    double  *  h_avg            = new double[ n_ ];
-    double  likelihood = 0 ;
-    for (int i = 0 ; i < n_ ; i++) {
-        sigma_0[ i ] = sigma_0_inv[ i ] = sigma_0_iter[ i ] = -1;
-        max_index_in_col[ i ] = -1 ;
-        freq[ i ] = new int [ n_ ]; for (int j = 0 ; j < n_ ; j ++) freq[ i ][ j ] = 0 ;
-    }
-    
-    for (int s = 0 ; s < m ; s ++)
-        for (int j = 0 ; j < n_ ; j ++)
-            freq[ j ][ samples[ s ][ j ] - 1 ]++;
-    //gen.print_int_matrix(freq, n_, n_);
-    for (int j = 0 ; j < n_ ; j++)
-        for (int i = 0 ; i < n_ ; i ++)
-            if (  max_index_in_col[ j ] == -1 || freq[ i ][ j ] > freq[  max_index_in_col[ j ] ][ j ]  )
-                max_index_in_col[ j ] = i;
-    for (int j = 0 ; j < n_ ; j++){
-        h_avg[ j ] = (double ) 1.0 - (double) freq[ max_index_in_col[ j ]][ j ] / m;
-    }
-    
-    //obtain the likelihod of the approx solution
-    estimate_consensus_approx_gmm(m, samples, sigma_0, &likelihood);
-
-    if ( sigma_0_ini != NULL ){
-        //obtain the likelihod of the proposed sigma_0_ini.
-        double like_ini = get_likelihood(m , samples , GENERALIZED_MALLOWS_MODEL , sigma_0_ini);
-        //check both solutions: the proposed sigma_0_ini vs. the approx. Discard the worse
-        if (like_ini > likelihood) {
-            likelihood = like_ini;
-            for (int i = 0 ; i < n_ ; i++) sigma_0[ i ] = sigma_0_ini[ i ];
-        }
-    }
-    
-    double nodes = estimate_consensus_exact_gmm_core(m, freq, max_index_in_col, h_avg, sigma_0_iter, sigma_0_inv, 0,0, &likelihood, sigma_0);
-    //cout<<"num_nodes "<<nodes<<endl;
-    
-    for (int i = 0 ; i < n_ ; i++) delete [] freq[ i ];
-    delete [] freq;
-    delete [] max_index_in_col;
-    delete [] sigma_0_inv;
-    delete [] sigma_0_iter;
-    delete [] h_avg;
-    return nodes;
-}*/
 
 double Hamming::expectation(double theta){
     double x_n = 0 , x_n_1 = 0, aux = 0 ;
@@ -640,14 +495,11 @@ void Hamming::estimate_consensus_approx_gmm(int m, int **samples, int *sigma_0, 
         for(int j = 0 ; j < n_ ;  j++)
             freq[ i ][ j ] = freq[ i ][ j ] * -1;
     for (int i = 0 ; i < n_ ; i++){
-        //h_vec[ i ] = m - freq[ sigma_0_inv[ i ]][ i ];
         h_avg[ i ] = (double ) 1 - (double)freq[ sigma_0_inv[ i ] - FIRST_ITEM ][ i ] / m ;
     }
     nr.mle_theta_weighted_mallows_hamming( m , h_avg, theta);
     for ( int i = 0 ; i < n_ ; i++) a1 += h_avg[ i ] * theta[ i ] ;
     *best_likelihood = (double)-m * (a1 + log ( psi_whm(theta)));
-    //variable_neighborhood_search(m , freq , sigma_0_inv , best_likelihood);
-    //for(int i = 0 ; i < n_; i ++) sigma_0[ sigma_0_inv[ i ] - FIRST_ITEM ] = i + FIRST_ITEM;
     
     for (int i = 0 ; i < n_ ; i++) delete [] freq[ i ];
     delete [] theta;
@@ -660,7 +512,7 @@ void Hamming::estimate_consensus_approx_gmm(int m, int **samples, int *sigma_0, 
     delete [] sigma_0_inv_neig_best;
     delete [] sigma_0_inv;
 }
-
+/*
 void Hamming::variable_neighborhood_search(int m, int **freq, int *sigma_0_inv, double *f_eval){
     double f_eval_ini;
     Generic gen;
@@ -781,7 +633,7 @@ void Hamming::local_search_swap_gmm(int m, int **freq, int *sigma_0_inv, double 
     delete [] v;
     delete [] sigma_0_inv_neig_best;
 }
-
+*/
 
 long double Hamming::get_likelihood(int m, int **samples, int model, int * sigma_0){
     Newton_raphson nr(n_);
@@ -790,7 +642,7 @@ long double Hamming::get_likelihood(int m, int **samples, int model, int * sigma
     double  psi, a1 = 0;
     if(model == MALLOWS_MODEL){
         int dist = distance_to_sample(samples, m, sigma_0);
-        theta[ 0 ] = nr.Newton_raphson_method( (double) dist/m, 0.0, HAMMING_DISTANCE, MALLOWS_MODEL, NULL, NULL);
+        theta[ 0 ] = nr.Newton_raphson_method( (double) dist/m, 0.0, HAMMING_DISTANCE, MALLOWS_MODEL, -1, NULL);
         psi = psi_hm(theta[ 0 ]);
         likelihood =  - theta[0] * dist - m * log( psi );
     }else{
@@ -833,7 +685,7 @@ void Hamming::estimate_theta(int m, int *sigma_0, int **samples, int model, doub
         //Newton_raphson nr(n_);
         double  dist = 0;
         dist = distance_to_sample( samples, m, sigma_0);
-        *theta = nr.Newton_raphson_method( (double) dist/m, 0.0, HAMMING_DISTANCE, MALLOWS_MODEL, NULL, NULL);
+        *theta = nr.Newton_raphson_method( (double) dist/m, 0.0, HAMMING_DISTANCE, MALLOWS_MODEL, -1, NULL);
     }
     else{
         Generic gen;
@@ -841,7 +693,6 @@ void Hamming::estimate_theta(int m, int *sigma_0, int **samples, int model, doub
         sample_to_h_vector(samples, m, sigma_0, h_avg);
         nr.mle_theta_weighted_mallows_hamming( m , h_avg, theta);
         //for ( int j = 0 ; j < n_ ; j ++) cout<< theta[j]<<" "; cout<<" theta (estimate_theta_gmm) "<<endl;
-        
         delete [] h_avg;
     }
 }

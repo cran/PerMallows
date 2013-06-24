@@ -113,4 +113,5 @@ private:
     
 };
 
-#endif /* defined(__perms_mallows__Newton_raphson__) */
+#endif 
+

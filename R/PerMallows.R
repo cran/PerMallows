@@ -1,12 +1,3 @@
-#2 way for calling the C code
-#res <- .C("factorial_fast", as.integer(perm.length), as.double(res))[2];
-#res is a list. For extracting the value
-#   res[[1]] or
-#   unlist(res)
-#.Call
-# for arrays
-#.Call("estimate_theta", 1, perm.length, num.perms, sigma0, sample, 0)
-
 # -----------------------------------------
 # Author: Ekhine Irurozki
 #         University of the Basque Country
@@ -88,7 +79,7 @@ inverse.permutation <- function(perm){
       return (order(perm))
     else if (is.matrix(perm))
       return (t(apply(perm, MARGIN=1,FUN=order)))
-  stop("Check parameters")
+  stop("Error in the input parameters: the input must be a permutation or a matrix of permutations")
 }
 
 #' Compose permutations
@@ -127,8 +118,8 @@ compose <- function(perm1, perm2){
 #' This function tests if the given argument is a permutation of the first 
 #' n natural integers excluding the 0
 #'
-#' @param perm a vector
-#' @return TRUE iff perm is a valid permutation
+#' @param perm a vector (or a bidimensional matrix)
+#' @return TRUE iff perm is a valid permutation (or a matrix of valid permutations)
 #' @export
 #' @examples
 #' is.permutation(c(3,1,2,4))
@@ -138,7 +129,7 @@ is.permutation <- function(perm){
   if (is.vector(perm)) return (.is.permutation.one(perm))
   else if (is.matrix(perm))
     return(all(apply(perm, MARGIN=1, .is.permutation.one)))
-  else stop("Check parameters")
+  else stop("Error in the input parameters: the input must be a permutation or a matrix of permutations")
 }
 
 .is.permutation.one <- function(perm){
@@ -181,6 +172,7 @@ order.ratings <- function(ratings){
   if (is.vector(ratings))
     return (order(ratings))
   return (t(apply(ratings, MARGIN=1, FUN=order)))
+  stop("The input parameter must be a vector")
 }
 
 #' Random permutation
@@ -305,10 +297,10 @@ expectation.gmm <- function (theta, dist.name="kendall"){
   if ( for.gmm ) err.msg = "Choose one of these distances: Cayley, Kendall, Hamming"
   else err.msg = "Choose one of these distances: Cayley, Kendall, Hamming, Ulam"
   
-  if      (dist.name == "cayley"  || dist.name == "Cayley")  dist_id = .CAYLEY.DISTANCE
-  else if (dist.name == "Kendall" || dist.name == "kendall") dist_id = .KENDALL.DISTANCE
-  else if (dist.name == "Hamming" || dist.name == "hamming") dist_id = .HAMMING.DISTANCE
-  else if (dist.name == "Ulam"    || dist.name == "ulam" &&  !for.gmm )    dist_id = .ULAM.DISTANCE
+  if      (dist.name == "c" || dist.name == "cayley"  || dist.name == "Cayley")  dist_id = .CAYLEY.DISTANCE
+  else if (dist.name == "k" || dist.name == "Kendall" || dist.name == "kendall") dist_id = .KENDALL.DISTANCE
+  else if (dist.name == "h" || dist.name == "Hamming" || dist.name == "hamming") dist_id = .HAMMING.DISTANCE
+  else if (dist.name == "u" || dist.name == "Ulam"    || dist.name == "ulam" &&  !for.gmm )    dist_id = .ULAM.DISTANCE
   else stop(err.msg)
   return (dist_id)
 }
@@ -440,7 +432,7 @@ rmm <- function(n, sigma0, theta, dist.name="kendall", sampling.method="distance
     sam <- .Call("sampling_multi_gibbs_cayley",dist_id,  perm.length, num.perms, theta, 0, algorithm_id)
   }else stop("Choose one of these algorithms: Distances, Gibbs, Multistage")
   if(!all(sigma0 == identity.permutation(perm.length)) ) 
-    sam <- compose(sam, inverse.permutation(sigma0))
+    sam <- compose(sam, sigma0)
   return(sam)
 }
 
@@ -478,7 +470,7 @@ rgmm <- function(n, sigma0, theta, dist.name="kendall", sampling.method="gibbs")
   sam <- .Call("sampling_multi_gibbs_cayley",dist_id, perm.length, num.perms, theta, 1, algorithm_id);
   #browser()
   if(!all(sigma0 == identity.permutation(perm.length)) ) 
-    sam <- compose(sam, inverse.permutation(sigma0))
+    sam <- compose(sam, sigma0)
   return(sam)
 }
 
@@ -672,6 +664,7 @@ generate.aux.files <- function(perm.length){
 #' @examples
 #' swap(c(1,2,3,4,5),2,5)
 swap <- function(perm, i, j){
+  if (!.is.permutation.one(perm)) stop("The input parameter perm must be a valid permutation")
   n <- length(perm)
   if ( i < 1 || i > n || j < 1 || j > n ) stop ("Swap only possible at positions 1..",n)
   if (i == j ) stop ("Set different values for i and j")
@@ -692,6 +685,7 @@ swap <- function(perm, i, j){
 #' @examples
 #' inversion.at(c(1,2,3,4,5),2)
 inversion.at <- function(perm, i){
+  if (!.is.permutation.one(perm)) stop("The input parameter perm must be a valid permutation")
   n <- length(perm)
   if ( i < 1 || i > n-1 ) stop ("Inversion only possible at positions 1..",n-1)
   aux <- perm[i]
@@ -714,6 +708,7 @@ inversion.at <- function(perm, i){
 #' insert.at(c(1,2,3,4,5),2,5)
 insert.at <- function(perm, i, j){
   #remove item at position i and place it after the j-th position 
+  if (!.is.permutation.one(perm)) stop("The input parameter perm must be a valid permutation")
   n <- length(perm)
   if(i<1 || i>n || j < 0 || j >n)  stop ("Insertion only possible at positions 1..",n)
   item <- perm[ i ]
@@ -800,6 +795,7 @@ cycles2permutation <- function(cycles){
       else perm[cycles[[i]][j]]=cycles[[i]][j+1]
     }
   }
+  if (!.is.permutation.one(perm)) stop("The cycles do not correspond to a valid permutation")
   return (perm)
 }
 
@@ -834,6 +830,27 @@ distance<-function(perm1,perm2=identity.permutation(length(perm1)), dist.name="k
   return(unlist(dist));
 }
 
+#' Get the maximum value of the distance ebtween permutations
+#'
+#' Compute the maximum posible value for the distance between two given permutations.
+#' The distance can be kendall, cayley, hamming and ulam
+#'
+#' @param perm.length number of items in the permutations
+#' @param dist.name optional. One of: kendall (default), cayley, hamming, ulam
+#' @return The maximum value for the distance between the permutations 
+#' @export
+#' @examples
+#' maxi.dist(4,"cayley")
+#' maxi.dist(10,"ulam")
+#' maxi.dist(4)
+maxi.dist <- function(perm.length, dist.name="kendall"){
+  dist_id = .check.distance.name(dist.name)
+  if (dist_id == .CAYLEY.DISTANCE || dist_id == .ULAM.DISTANCE ) return (perm.length - 1 )
+  if (dist_id == .HAMMING.DISTANCE ) return ( perm.length )
+  if (dist_id == .KENDALL.DISTANCE ) return ( perm.length * ( perm.length - 1 ) / 2 ) 
+  return (-1)
+}
+
 #' Count permutations at a distance
 #'
 #' Given a distance (kendall, cayley, hamming or ulam), 
@@ -853,6 +870,7 @@ distance<-function(perm1,perm2=identity.permutation(length(perm1)), dist.name="k
 #' count.perms.distance(4,2,"hamming")
 #' count.perms.distance(4,2,"cayley")
 count.perms.distance <- function(perm.length, dist.value, dist.name="kendall", disk=FALSE){
+  if (dist.value < 0 ) stop("The distance must greater than or equal to 0")
   count <- 0
   dist_id = .check.distance.name(dist.name)
   if ( disk ){
@@ -884,6 +902,7 @@ count.perms.unfixed.points.gtet <- function(perm.length, unfixed=perm.length){
   #count the num of perms in which the first k positions have sigma(i)!=i, for all 0<i<=k
   #the rest can be 0 or 1
   #if(k=perm.length) counts the number of derangements
+  if (unfixed < 0 || unfixed > perm.length) stop("The number of unfixed items must be between 0 and ", perm.length)
   res <- 0
   res <- .C("count_permus_with_at_least_k_unfixed_points", as.integer(perm.length), as.integer(unfixed), as.double(res))[3];
   return(res[[1]])
@@ -950,6 +969,9 @@ count.perms.cycles <- function(perm.length,num.cycles){
 #' @examples
 #' r.perms.cycles(1, 4, 2)
 r.perms.cycles <- function(n, perm.length, cycles){
+  if (cycles > perm.length ) 
+    stop ("The number of cycles must be smaller
+        than the number of items in the permutations, perm.length")
   return(r.dist.d(n, perm.length, perm.length - cycles, "cayley"))
 }
 
@@ -987,8 +1009,12 @@ r.derangement <- function(n, perm.length){
 r.dist.d <- function(n, perm.length, dist.value, dist.name="kendall"){
   num.perms <- n
   dist_id = .check.distance.name(dist.name)
-  
-  if (dist_id == 2 && dist.value == 1 ) stop("There is no permutation at Hamming distance 1")
+  if ( dist.value < 0 ) stop("The distance must be greater than 0")
+  if ( dist.value > maxi.dist(perm.length,dist.name) )
+    stop("The distance must be smaller than the largest
+         possible ",dist.name," distance for permutations of ",perm.length,
+          " items, which is ",maxi.dist(perm.length, dist.name))
+  if (dist_id == .HAMMING.DISTANCE && dist.value == 1 ) return (0)
   res<-.Call("get_random_sample_at_dist_d", as.integer(dist_id), 
              as.integer(perm.length),as.integer(num.perms),as.integer( dist.value ))
   return(res)
@@ -1007,17 +1033,16 @@ r.dist.d <- function(n, perm.length, dist.value, dist.name="kendall"){
 #' permutation2decomposition(c(1,2,4,3,5), "cayley")
 #' permutation2decomposition(c(1,2,4,3,5), "hamming")
 permutation2decomposition <- function(perm, dist.name="kendall"){
+  if (!.is.permutation.one(perm)) stop("The input parameter perm must be a valid permutation")
   perm.length<-length(perm)
-  if (dist.name == "Hamming" || dist.name == "hamming") {
+  dist_id = .check.distance.name(dist.name, TRUE)
+  if (dist_id == .HAMMING.DISTANCE) {
     vec <- rep(0,perm.length)
     for (i in 1:perm.length) if (perm[i] != i) vec[i] = 1
     return(vec)
   }
   vec <- c(1:perm.length) #only the first (perm.lenth-1) pos will be returned
   #the last equals 0
-  if      (dist.name == "cayley" || dist.name == "Cayley")     dist_id = .CAYLEY.DISTANCE 
-  else if (dist.name == "Kendall" || dist.name == "kendall")   dist_id = .KENDALL.DISTANCE 
-  else stop("Choose one of these distances: Cayley, Kendall, Hamming")
   res <- .C("get_altern_repre_for_permu", as.integer(dist_id), as.integer(perm.length), 
             as.integer(perm), as.integer(vec))[4]
   return(unlist(res)[ 1 : perm.length - 1 ] )
@@ -1037,10 +1062,13 @@ permutation2decomposition <- function(perm, dist.name="kendall"){
 #' decomposition2permutation(c(1,0,1,0,0), "cayley")
 #' decomposition2permutation(c(1,0,1,0,0), "hamming")
 decomposition2permutation <- function(vec, dist.name="kendall"){
-  if(dist.name == "cayley" || dist.name == "Cayley")           dist_id = .CAYLEY.DISTANCE
-  else if (dist.name == "Kendall" || dist.name == "kendall")   dist_id = .KENDALL.DISTANCE
-  else if (dist.name == "Hamming" || dist.name == "hamming")   dist_id = .HAMMING.DISTANCE
-  else  stop("Choose one of these distances: Cayley, Kendall, Hamming")
+  dist_id = .check.distance.name(dist.name, TRUE)
+  if (dist_id == .CAYLEY.DISTANCE || dist_id == .HAMMING.DISTANCE )
+    if (any(sapply(X = vec, function(x){(x!=0 && x !=1) })))
+      stop("The input vector does not correspond to a valid permutation, must be binary")
+  if(dist_id == .KENDALL.DISTANCE 
+     && any(sapply(X = 1:length(vec), function(x){(vec[x] < 0 ||vec[x] > length(vec)-x) })))
+    stop("The input vector does not correspond to a valid permutation")
   perm.length <- length(vec) 
   if (dist_id == 0 || dist_id == 1) {
     perm.length = perm.length + 1

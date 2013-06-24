@@ -5,20 +5,19 @@
 //  Created by Ekhine Irurozki on 20/06/13.
 //  Copyright (c) 2013 Ekhine Irurozki. All rights reserved.
 //
-
+#include <R.h>
 #include "Cayley.h"
 #include "Generic.h"
 #include "Newton_raphson.h"
 #include "Ulam.h"
-#include <R.h>
 #include <cmath>
 #include <cfloat>
 
 double  Cayley::expectation(double theta) {
-        double sum=0;
+        double sum=0, ex, denom;
         for(int j = 1 ; j < n_ ; j++){
-            double ex = exp(theta);
-            double denom = j+ex;
+            ex = exp(theta);
+            denom = j+ex;
             sum += (double)j/denom;
             //sum += (double) j /(double)(exp(theta)+(double)j);
         }
@@ -34,11 +33,11 @@ void    Cayley::expectation(double *theta, double *expect) {
 }
 
 double Cayley::probability(int *s, int *s_0, double *theta){
-    int *x = new int[ n_ ],*comp = new int[ n_ ], *inv = new int[ n_ ];
-    for(int i= 0;i < n_; i ++ ) inv[s_0[ i ]-1] =i+1;
-    double proba=1;
-    for (int i = 0 ; i < n_; i ++ ) comp[ i ] =s[inv[ i ]-1]; 
-    double *psi = new double[ n_ ];
+    int     *x = new int[ n_ ],*comp = new int[ n_ ], *inv = new int[ n_ ];
+    double  *psi    = new double[ n_ ];
+    double  proba   =1;
+    for (int i = 0 ; i < n_; i ++ ) inv[s_0[ i ]-1] =i+1;
+    for (int i = 0 ; i < n_; i ++ ) comp[ i ] =s[inv[ i ]-1];
     perm2dist_decomp_vector(comp, x);
     calculate_psi(theta, psi);
     for(int i = 0 ; i < n_ - 1 ; i ++ ) proba *= exp(-theta[ i ]*x[ i ])/psi[ i ];
@@ -58,7 +57,7 @@ double Cayley::get_theta_log_likelihood(int m, int *x_acumul, int *x_acumul_vari
         int x_i = x_acumul[ i ];
         if(x_acumul_variation != NULL)x_i += x_acumul_variation[ i ];
         int j = i+1;
-        if(x_i == 0)x_i=1;
+        if(x_i == 0)  x_i = 1;
         if(x_i == m)  x_i = m-1;
         double xav = (double) x_i/m;
         if(xav != 0){
@@ -108,8 +107,8 @@ int Cayley::get_cycles(int *sigma, int *cycle_items, int *cycle_indices){
     bool*visited = new bool[ n_ ];
     for (int i = 0 ; i < n_; i ++ )visited[ i ] =false;
     int item_index, cont=0, cycle_index= 0;
-    while(cont<n_) {
-        item_index= 0;
+    while( cont < n_ ) {
+        item_index = 0;
         while(visited[item_index])item_index++;
         while (!visited[item_index]) {
             visited[item_index] = true;
@@ -127,7 +126,8 @@ int Cayley::get_cycles(int *sigma, int *cycle_items, int *cycle_indices){
 void Cayley::random_sample_at_dist(int d, int m, int **samples){
     //samples must be initialized before as samples = new int*[ m ];
     for (int i = 0 ; i < m; i ++ ){
-        samples[ i ] =generate_permu_with_k_cycles(n_, n_ - d );
+        samples[ i ] = new int[ n_ ];
+        generate_permu_with_k_cycles(n_, n_ - d , samples[ i ]);
     }
 }
 double Cayley::calculate_psi(double *theta, double *psi_vector){
@@ -140,133 +140,115 @@ double Cayley::calculate_psi(double *theta, double *psi_vector){
     return psi;
 }
 
-void Cayley::dist_decomp_vector2perm(int* vec, int* sigma) {
-    //x has length n
-    //forward generation of the permtation
-    int *sigma_inv = new int [ n_ ];
-    int item ;//from 0..n-1 !!!!
-    for (int i = 0 ; i < n_ ; i++) sigma_inv [ i ] = -1;
-    for (int pos = 0 ; pos < n_ ; pos ++) {
-        if (vec[ pos ] == 0){// an item <= pos can close the cycle
-            item = pos ;
-            while ( sigma_inv [ item ] != -1 || ! item_closes_cycle(pos, item, sigma, sigma_inv)) item --;
+
+void Cayley::generate_permu_with_k_cycles(int n, int k, int * sigma){
+    // n: 1..n_
+    bool * long_cycle = new bool [ n_ ];
+    int ran2;
+    long double  ran1 ;
+    
+    while ( k > 1 ){
+        ran1 =(long double) unif_rand();
+        //ran1 = ((long double)rand() / ((double)RAND_MAX + 1 ) );
+        if(ran1 < (long double)(stirling_matrix_[ n - 1 ][ k - 1 ] / stirling_matrix_[ n ][ k ])){
+            long_cycle[ n - 1 ] = false;
+            k --;
         }else{
-            item = - 1 ;//from 0..n-1 !!!!
-            //int random = rand() % (n_ - pos - 1);
-            int random = (int) (unif_rand() * (n_ - pos - 1));
-            while ( random  >= 0 ){
-                item++;
-                if (sigma_inv [ item  ] == -1 &&  ! item_closes_cycle(pos , item, sigma, sigma_inv)  )     random --;
+            long_cycle[ n - 1 ] = true;
+        }
+        n --;
+    }
+    Generic gen; //use sigma_inv_ as auxiliary array
+    //the n first items form a cycle
+    gen.generate_random_permutation(n, 0, sigma_inv_);
+    for (int i = 0 ; i < n-1; i ++ ) sigma[sigma_inv_[ i ]] = sigma_inv_[i+1]+1;
+    sigma[sigma_inv_[n-1]] =sigma_inv_[0]+1;
+    
+    for (int i = n ; i < n_ ; i++){
+        if ( long_cycle[ i ] ){
+            //ran2 = rand() % ( i ) ;//0..n-2
+            ran2 = (int) (unif_rand() * i );//[ 0,i)
+            sigma[ i ] = sigma[ ran2 ];
+            sigma[ ran2 ] = i + 1;
+        }else{
+            sigma[ i ] = i + 1;
+        }
+    }
+    delete [] long_cycle;
+}
+
+void Cayley::dist_decomp_vector2perm(int* vec, int* sigma) {
+    x_vector_to_permutation_forward(vec , sigma);
+    //x_vector_to_permutation_backwards(vec , sigma);
+}
+void Cayley::x_vector_to_permutation_forward(int *x, int *sigma){
+    int random, aux;
+    for ( int i = 0 ; i < n_ ; i++) sigma[ i ] = i + 1;
+    for ( int i = 0 ; i < n_ - 1 ; i++)
+        if ( x [ i ] == 1 ){
+            //random = (i + 1) + ( rand() % (n_ - i - 2 + 1) ); // random \in (i + 1)+[0..n-i-2] = [i+1..n-1]
+            random = (i + 1) +  (int)( unif_rand() * (n_ - i - 2 + 1) );
+            aux = sigma[  random ];
+            sigma[ random ] = sigma[ i ];
+            sigma[ i ] = aux;
+        }        
+}
+
+
+void Cayley::x_vector_to_permutation_backwards(int *x, int *sigma){
+    int     dist =  0;
+    int     tables_num = 0 ;
+    for (int i = 0 ; i < n_ ; i ++) dist += x[ i ];
+    int     * tables_len = new int [ n_ - dist ];
+    int     ** tables    = new int*[ n_ - dist ];
+    for ( int i = 0 ; i < n_ - dist ; i++) {
+        tables_len[ i ] = 1;
+        tables[ i ] = new int[ dist + 1 ];
+        for (int j = 0 ; j < dist ; j ++) tables[ i ][ j ] = 0 ;
+    }
+    
+    x[ n_ - 1 ] = 0 ; //
+    for ( int i = n_ - 1 ; i >= 0 ; i--){
+        if ( x[ i ] == 0 ){ //sit the item at a new table
+            tables[ tables_num ][ 0 ] = i;
+            tables_num ++;
+        }else{//unformly at random choose an item i among the ones that are sitting
+            //and sit the new item at the right of i
+            int table_num_insert = 0, table_pos_insert = 0;
+            //table_pos_insert = (int) rand() % ( n_ - i - 1 );
+            table_pos_insert = (int) ( unif_rand() * ( n_ - i - 1 ));
+            while ( table_pos_insert >= tables_len[ table_num_insert ] ){
+                table_pos_insert -= tables_len[ table_num_insert ] ;
+                table_num_insert ++;
             }
+            tables[ table_num_insert ][ tables_len[table_num_insert] ] = i;
+            tables_len [table_num_insert ] ++;
         }
-        sigma_inv[ item ] = pos + FIRST_ITEM;
-        sigma[ pos ] = item + FIRST_ITEM;
     }
-    delete [] sigma_inv;
-}
-
-bool Cayley::item_closes_cycle(int pos, int item, int *sigma, int *sigma_inv){
-    while (item < pos ) item = sigma[ item ] - FIRST_ITEM;
-    if ( item == pos ) return true;
-    return false;
-}
-/*void Cayley::get_permutation_from_X_from_ini(int *x, int *sigma){
- int *sigma_inv = new int [ n_ ];
- int item ;
- for (int i = 0 ; i < n_ ; i++) sigma_inv [ i ] = -1;
- for (int pos = 0 ; pos < n_ ; pos ++) {
- if (x[ pos ] == 0){// an item <= pos can close the cycle
- item = pos + FIRST_ITEM;
- while ( sigma_inv [ item - FIRST_ITEM ] != -1 || ! item_closes_cycle(pos, item, sigma, sigma_inv)) item --;
- }else{
- item = FIRST_ITEM - 1 ;
- int random = rand() % (n_ - pos - 1);
- while ( random  >= 0 ){
- item++;
- if (sigma_inv [ item - FIRST_ITEM ] == -1 &&  ! item_closes_cycle(pos , item, sigma, sigma_inv)  )     random --;
- }
- }
- sigma_inv[ item - FIRST_ITEM ] = pos ;
- sigma[ pos ] = item ;
- }
- 
- delete [] sigma_inv;
- }
- 
- bool Cayley::item_closes_cycle(int pos, int item, int *sigma, int *sigma_inv){
- item -= FIRST_ITEM;
- while (item < pos ) item = sigma[ item ] - FIRST_ITEM;
- if ( item == pos ) return true;
- return false;
- }
-*/
-
-void Cayley::x_vector_to_permutation_backwards_old(int *x, int *permu){
-    int distance= 0; for(int i = 0; i < n_ ; i++)if(x[ i ] == 1)distance++;
-    // cyles[][] guarda un ciclo en cada fila. El prmer numero de cada fila
-     // cycles[ i ][0] es un item que tiene x_j=0 y es el mayor del ciclo
-     
-     // para cada elem con x_j=1 se asigma aleatoriameente a cada alguno de los ciclos
-     // con la restriccion de que pertenezca a un ciclo cuyo maximo item
-     //
-     //
-    bool mute=true;
-    int *cycle = new int[ n_ ];
     Generic gen;
-    //for (int i = 0 ; i < n; i ++ ) cout<< x[ i ]<<" ";cout <<" x"<<endl;
-    //v2
-    //int len1=distance;//num posiciones con x[ i ] ==1
-    int len0=n_-distance;//num posiciones con x[ i ] ==0
     
-    int *cont = new int[len0];
-    int **cycles = new int*[len0];
-    for (int i = 0 ; i < len0; i ++ )cycles[ i ]  = new int[distance+1];
-    for (int i = 0 ; i < len0; i ++ ){
-        for(int j= 0;j<distance+1;j++)cycles[ i ][ j ] =-1;
-        cont[ i ] = 0;
+    for (int i = 0 ; i < tables_num ; i++ ){
+        gen.random_shuffle(tables_len[ i ], tables[ i ]);
+        sigma[ tables[ i ][ tables_len[ i ] - 1 ]  ] = tables[ i ][ 0 ]  + FIRST_ITEM;
+        for (int j = 0 ; j < tables_len[ i ] - 1 ; j++)
+            sigma[ tables[ i ][ j ] ] = tables[ i ][ j + 1 ] + FIRST_ITEM;
+  
+        delete [] tables[ i ];
     }
-    int iniCont= 0;
-    //en ccycles van los indices de 0..n-1
-    //al construir la permu se ponen lo indices de 1..n
-    for (int i = 0 ; i < n_; i ++ )
-        if(x[ i ] ==0){
-            cycles[iniCont][cont[iniCont]++] =i;//se meten los items desde 0..n-1
-            iniCont++;
-        }
+    delete [] tables;
+    delete [] tables_len;
     
-    //if(!mute) for (int i = 0 ; i < len0; i ++ )cout<<"cycles first "<<cycles[ i ][0]<<endl;
-    
-    double prob=1, partialProb= 0;
-    for(int xind=n_-1;xind>= 0;xind--){
-        if(x[xind] ==1){
-            int cycleNum = get_most_prob_cycle(xind, cycles, len0, cont);
-            prob *= partialProb;
-            cycles[cycleNum][cont[cycleNum]++] =xind;//se meten los items desde 0..n-1
-        }
-    }
-    // double permsInCyle=1;
-    
-    for (int i = 0 ; i < len0; i ++ ){
-        int cycleLength = cont[ i ];
-        int *rand = new int[cycleLength];
-        gen.generate_random_permutation(cycleLength, 0, rand);//rand:0..n-1
-        cycle=cycles[ i ];
-        permu[cycle[rand[cycleLength-1]]] = cycle[rand[0]] + 1; //+1 <= permu[ i ] \in {1..n}
-        for(int j= 0;j<cycleLength-1;j++)
-            permu[cycle[rand[ j ]]] = cycle[rand[j+1]] + 1;////+1 <=permu[ i ] \in {1..n}
-        delete []cycle;
-    }
 }
+
+
+
 long double Cayley::num_permus_at_distance(int d){
     return stirling_matrix_[n_ ][ n_ - d];
 }
 long double Cayley::count_permus_with_cycles(int d){
     return stirling_matrix_[n_ ][ n_ - d];
 }
-void Cayley::print_stirling_matrix(){
-    Generic gen;
-    gen.print_long_double_matrix(stirling_matrix_, n_ + 1, n_ + 1);
-}
+
 
 int Cayley::distance(int * s, int * t){
     int *comp = new int[ n_ ], *sigma_inv = new int[ n_ ];
@@ -310,15 +292,16 @@ void Cayley::distances_sampling(int m, double theta, int **samples) {
     double  rand_val;
     long double *acumul = new long double[ n_ ];//+1
     acumul[0] =exp(-theta  * 0) * stirling_matrix_[ n_ ][ n_ ];//stirling1(n_,n_);
-    for(int dista=1;dista< n_ ;dista++)
-        acumul[dista] =acumul[dista-1] +  exp(-theta  * dista) * stirling_matrix_[ n_ ][ n_ - dista ];//stirling1(n_,n_-dista);
+    for(int dista = 1 ; dista < n_ ; dista++)
+        acumul[dista] =acumul[ dista - 1 ] +  exp(-theta  * dista) * stirling_matrix_[ n_ ][ n_ - dista ];//stirling1(n_,n_-dista);
     for (int i = 0 ; i < m; i ++ ){
         target_dist = 0;
         //rand_val = (double) acumul[ n_ - 1 ] * (double) rand() / RAND_MAX;
-        rand_val = (double) acumul[ n_ - 1 ] * unif_rand();
+        rand_val = (double) (acumul[ n_ - 1 ] * unif_rand());
         while(acumul[target_dist] <= rand_val) target_dist++;
-        int *sigma=generate_permu_with_k_cycles(n_,(n_-target_dist));
-        samples[ i ] =sigma;
+        //int *sigma=generate_permu_with_k_cycles(n_,(n_-target_dist));
+        samples[ i ] = new int [ n_ ];
+        generate_permu_with_k_cycles(n_,(n_-target_dist), samples[ i ]);
     }
     delete []acumul;
 }
@@ -328,6 +311,7 @@ void Cayley::distances_sampling(int m, double theta, int **samples) {
 void Cayley::multistage_sampling(int m, double *theta, int **samples){
     double *psi = new double[n_-1];
     int *x = new int[ n_ ];
+    Generic gen;
     
     calculate_psi(theta, psi);
     for(int samp = 0 ; samp < m ; samp++){
@@ -390,10 +374,8 @@ void Cayley::gibbs_sampling(int m, double *theta, int model, int **samples) {
     for(int sample= 0;sample<m+burning_period_samples;sample++){
         int i,j, max_i=-1, max_j=-1, min;
         do{
-            //i = rand() % n_;
-            i = (int) (unif_rand() * n_);
-            //j = rand() % n_;
-            j = (int) (unif_rand() * n_);
+            i = (int) (unif_rand() * n_); //rand() % n_;
+            j = (int) (unif_rand() * n_); //rand() % n_;
         }while(i == j);
         bool make_swap = false;
         if(  same_cycle(i, j, sigma) )  make_swap=true;
@@ -405,7 +387,6 @@ void Cayley::gibbs_sampling(int m, double *theta, int model, int **samples) {
             }else{
                 get_max_item_in_current_cycle(sigma, i, &max_i);
                 get_max_item_in_current_cycle(sigma, j, &max_j);
-                //get_max_item_in_future_cycles(sigma, i, j, &max_i, &max_j);
                 min = (max_i < max_j) ? max_i : max_j;
                 if(rand_double < exp(-theta[min])) make_swap = true;
             }
@@ -425,78 +406,6 @@ void Cayley::gibbs_sampling(int m, double *theta, int model, int **samples) {
 }
 
 
-int Cayley::get_most_prob_cycle(int ind, int **cycles, int len, int *leng_cycles){
-    //returns the cycle index
-    Generic gen;
-    int cont = 0;
-    while(ind>cycles[cont][0]) cont++;
-    //each cycles from cycle[cont] to cycle[len-1] has a particuler
-    //probability of being selected as the terget
-    //this prob is
-    float*proba_cycles = new float[len];
-    float*proba_cyclesNoAcum = new float[len];
-    for (int i = 0 ; i < len; i ++ ) proba_cycles[ i ] = 0;
-    float acumul= 0;
-    for(int i=cont ; i < len; i ++ ){
-        for(int j=cont;j<len;j++){
-            //if(j==i)proba_cycles[ i ] *= (float)gen.factorial(lengCycles[ j ]);
-            //else proba_cycles[ i ] *= (float) gen.factorial(lengCycles[ j ]-1);
-            float multi;
-            if(j==i) multi= (float)gen.factorial(leng_cycles[ j ]);
-            else  multi= (float) gen.factorial(leng_cycles[ j ]-1);
-            if(proba_cycles[ i ] ==0) proba_cycles[ i ] =multi;
-            else proba_cycles[ i ] *= multi;
-        }
-        acumul += proba_cycles[ i ];
-    }
-    for (int i = 0 ; i < len; i ++ )proba_cyclesNoAcum[ i ] =(float)proba_cycles[ i ]/acumul;
-    for(int i=cont ; i < len; i ++ )
-        if(i!=0)proba_cycles[ i ] = (float)proba_cycles[ i ]/acumul + (float)proba_cycles[i-1];
-        else proba_cycles[ i ] = (float)proba_cycles[ i ]/acumul ;
-    //float ran = (float)rand()/(RAND_MAX);
-    float ran = (float) unif_rand();
-    delete []proba_cycles;
-    for(int i=cont ; i < len; i ++ )
-        if(proba_cycles[ i ]>ran){
-            //*partialProb=proba_cyclesNoAcum[ i ];
-            return i;
-        }
-    
-    return len-1;
-}
-int * Cayley::generate_permu_with_k_cycles(int n, int k){//generateUARPermuWithKCyles
-    int *sigma = new int[n];
-    if(n==k) for (int i = 0 ; i < n; i ++ )sigma[ i ] =i+1;
-    else
-        if(k==1){
-            Generic gen; int *cycle = new int[n];
-            gen.generate_random_permutation(n, 0, cycle);
-            for (int i = 0 ; i < n-1; i ++ ) sigma[cycle[ i ]] = cycle[i+1]+1;
-            sigma[cycle[n-1]] =cycle[0]+1;
-            delete []cycle;
-        }else{
-            //long double  ran1 =((long double)rand() / ((double )RAND_MAX +1 ) );
-            long double  ran1 =(long double) unif_rand();
-            int ran2=-1;
-            if(ran1 < (long double)(stirling_matrix_[ n - 1 ][ k - 1 ] / stirling_matrix_[ n ][ k ])){//stirling1(n-1, k-1) / stirling1(n,k))){////n is in a cycle by itself
-                /* long double ran1 = rand() % (long double)stirling1(n,k),  ran2=-1; if(ran1 < stirling1(n-1, k-1)){ */
-                int *small=generate_permu_with_k_cycles(n-1, k-1);
-                for (int i = 0 ; i < n-1; i ++ )sigma[ i ] = small[ i ];
-                sigma[n-1] =n;
-                delete []small;
-            }else{
-                int *small=generate_permu_with_k_cycles(n-1, k);
-                for (int i = 0 ; i < n-1; i ++ )sigma[ i ] =small[ i ];
-                //ran2 = rand() % (n-1) ;//0..n-2
-                ran2 = (int) (unif_rand() * (n-1) );//[ 0,n-2)
-                sigma[n-1] =sigma[ran2];
-                sigma[ran2] =n;
-                delete []small;
-            }
-        }
-    return sigma;
-}
-
 long double Cayley::get_likelihood(int m, int** samples, int model, int * sigma_0){
     double  psi;
     int     dist    = 0 ;
@@ -507,7 +416,7 @@ long double Cayley::get_likelihood(int m, int** samples, int model, int * sigma_
         Newton_raphson newton(n_);
         double  *psi_vec = new double [n_];
         dist = distance_to_sample(samples, m, sigma_0);
-        theta[ 0 ] = newton.Newton_raphson_method((double)dist/m, -10.001,CAYLEY_DISTANCE, MALLOWS_MODEL, NULL, NULL);
+        theta[ 0 ] = newton.Newton_raphson_method((double)dist/m, -10.001,CAYLEY_DISTANCE, MALLOWS_MODEL, -1, NULL);
          for (int i = 1 ; i < n_ -1; i++) theta[ i ] = theta[ 0 ];
          psi = calculate_psi(theta, psi_vec);
          delete [] psi_vec;
@@ -536,7 +445,7 @@ long double Cayley::get_likelihood(int m, int** samples, int model, int * sigma_
      if(model == MALLOWS_MODEL){
         int dist = distance_to_sample(samples, m, sigma_0);
         Newton_raphson newton(n_);
-        theta[0] = newton.Newton_raphson_method((double)dist/m, -10.001,CAYLEY_DISTANCE, MALLOWS_MODEL, NULL, NULL);
+        theta[0] = newton.Newton_raphson_method((double)dist/m, -10.001,CAYLEY_DISTANCE, MALLOWS_MODEL, -1, NULL);
     }else{
         int *x = new int[ n_ ], *x_acumul = new int[ n_ ], *inv = new int[ n_ ], *comp = new int[ n_ ];
         for(int i = 0 ; i < n_ ; i++) x_acumul[ i ] = 0;
@@ -686,11 +595,18 @@ double Cayley::estimate_consensus_exact_gmm_core(int m, int pos, int ** samples,
                     samples_inv_freq[pos][it]++;
                     samples_inv_freq[x-1][y]++;
                 }
+                if(trace){
+                    for (int k = 0 ; k < n_ ; k ++ ) cout<<samples[ s ][ k ]<<" ";cout<<" sample ";
+                    for (int k = 0 ; k < n_ ; k ++ ) cout<<samples_inv[ s ][ k ]<<" ";cout<<" sampInv ";
+                    for (int i = 0 ; i < n_ ; i ++ ) cout<<current_sigma_inv[ i ]<<" ";cout<<" sigmaInv ";
+                    for (int i = 0 ; i < n_ ; i ++ ) cout<<current_sigma[ i ]<<" ";cout<<" sigma (v3)"<<endl;;}
+                //in this case the distance has incresed in one, x[maxItemInCylce] was 0 and now = 1
             }
             
             int *xbound = new int[ n_ ];
             for (int i = 0 ; i < n_; i ++ )xbound[ i ] = 0;
             get_x_lower_bound_freq(m, samples_inv_freq, pos+1, xbound);
+            if(trace){for (int i = 0 ; i < n_; i ++ ) cout<<xbound[ i ]<<" ";cout<<" xbound, pos: "<<pos<<endl;}
             
             for (int i = 0 ; i < n_; i ++ )x_acum_var[ i ] =x_acum[ i ];
             x_acum_var[pos] += xIncr;
@@ -756,7 +672,7 @@ double Cayley::estimate_consensus_exact_mm(int m, int **samples, int*sigma_0_ini
     }
 
     double visited_nodes = estimate_consensus_exact_mm_core(m, 0 , samples, samples_inv, x_acum, sigma_0_aux, sigma_0_inv_aux, 0, sigma_0, &best_distance);
-    for (int i = 0 ; i < m; i ++ ) delete [] samples_inv[ i ];
+    for (int i = 0 ; i < m; i ++ ) delete []samples_inv[ i ];
     delete [] samples_inv;
     delete [] x_acum;
     delete [] sigma_0_aux;
@@ -806,11 +722,18 @@ double Cayley::estimate_consensus_exact_mm_core(int m, int pos, int ** samples, 
                     pos_swaps[ s ] =y;
                     x_incr++;
                 }
+                if(trace)
+                {   for (int k = 0 ; k < n_ ; k ++) cout<<samples[ s ][ k ]<<" ";cout<<" sample ";
+                    for (int k = 0 ; k < n_ ; k ++) cout<<samples_inv[ s ][ k ]<<" ";cout<<" sampInv ";
+                    for (int i = 0 ; i < n_; i ++ ) cout<<current_sigma_inv[ i ]<<" ";cout<<" sigmaInv ";
+                    for (int i = 0 ; i < n_; i ++ ) cout<<current_sigma[ i ]<<" ";cout<<" sigma (v3)"<<endl;;}
+                //in this case the distance has incresed in one, x[maxItemInCylce] was 0 and now = 1
             }
             
             double distance_bound = 0;
             int *xbound = new int[ n_ ];for (int i = 0 ; i < n_; i ++ )xbound[ i ] = 0;
             get_x_lower_bound(m, samples_inv, pos+1, xbound);
+            if(trace){for (int i = 0 ; i < n_; i ++ ) cout<<xbound[ i ]<<" ";cout<<" xbound, pos: "<<pos<<endl;}
             for(int i=pos+1 ; i < n_; i ++ ) distance_bound+=xbound[ i ];
             delete []xbound;
             for (int i = 0 ; i < n_; i ++ ){

@@ -30,6 +30,7 @@
 #define FIRST_ITEM 1
 
 #define BUCKET_EXP_HAM 200 //hamming sampling experiments. check every sample of this size
+#define BUCKET_EXP_UL_100 40
 #define BUCKET_EXP_HAM_LER 10 //hamming sampling experiments. check every sample of this size
 
 
@@ -51,7 +52,7 @@ public:
 
     void insert_at(int *sigma, int n, int move, int to, int*res);
     
-    int**read_sample_file(int n, int m, char*path);
+   /* int**read_sample_file(int n, int m, char*path);
 
     void print_freq_matrix(int **samples, int m, int n);
     
@@ -65,8 +66,10 @@ public:
     
     void print_double_vector(double*vec, int n);
         void print_float_vector(float*vec, int n);
-        
+    */    
     void generate_random_permutation(int len, int first_item_in_perm, int*sigma);
+    
+    void random_shuffle(int len, int*array);
     
     void compose(int n, int*s1, int*s2, int*res);
     
@@ -75,9 +78,7 @@ public:
     void invert_sample(int n, int m, int ** sample, int ** sample_inv);
     
     void get_permu_matrix(int n,int*sigma, int**matrix);
-    
-    void print_permus(int n);
-    
+        
     long double factorial(int val) ;
 
     long double count_permus_with_at_least_k_unfixed_points(int n, int k);
@@ -101,14 +102,13 @@ public:
     double get_factorial_in_table(int i){
         if(facts_ == NULL || facts_n_ < i ){
             //run init_factorial(n). count_permus_no_fixed_points does it, 
-            //cout <<"load factorial error, get_factorial_in_table "<<endl;
-            //exit(1);
-            return -1;
+            cout <<"load factorial error, get_factorial_in_table "<<endl;
+            exit(1);
         }
         return facts_[i];
     }
     
-    void riffle_shuffle(int n, int m, int times, int *sigma, int **shuffle);
+    //void riffle_shuffle(int n, int m, int times, int *sigma, int **shuffle);
     
     void freq_matrix(int ** samples, int m, int n, int**freq);
     

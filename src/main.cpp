@@ -7,6 +7,10 @@
 //  Copyright (c) 2013 Ekhine Irurozki. All rights reserved.
 //
 
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+
 #include <iostream>
 #include "Cayley.h"
 #include "Ulam.h"
@@ -42,11 +46,13 @@ void op_18();
 void op_19();
 
 int get_int_with_msg(char*str);
+int get_theta(double*theta,int  n, int dist_id);
 
 void test_uar_end(int dist);
     void test_uar(int*sigma);
 int getIndex(int**matrix, int*sigma);
 bool is_equal_to(int*s1, int*s2);
+void test_uar ( int**sample, int m);
 void init_test_uar(int len, int n_);
 void run_test();
 
@@ -58,17 +64,16 @@ Exponential_model * exp_mod_;
 
 
 
-
-/*****************************       PRJ       ************************************/
+/*****************************       PRJ       ************************************
 int main(int argc, const char * argv[])
 { 
     Generic gen;
-    //gen.seed();
-    //loop_menu();
+    gen.seed();
+    loop_menu();
     return 0;
 }
-/**********************     GENERAL      *************************/
-/*
+**********************     GENERAL      *************************
+
 int get_int_with_msg(char*str){
     cout<<str<<endl<<">";
     int k;
@@ -99,8 +104,8 @@ int get_theta(double*theta,int  n, int dist_id){
     return GENERALIZED_MALLOWS_MODEL;
 }
 
-/**********************           *************************/
-/*
+**********************           *************************
+
 void user_menu(){
     cout<<"\t 1.\tGenerate a random sample at distance d"<<endl;
     cout<<"\t 2.\tGenerate a random sample with the distances sampling method"<<endl;
@@ -130,7 +135,7 @@ void loop_menu(){
     Generic gen;
     char str_msg[100];
     strcpy(str_msg, "Intro n (number of items of the permutations): ");
-    dist_id_ = KENDALL_DISTANCE;
+    dist_id_ = CAYLEY_DISTANCE;
     n_       = get_int_with_msg(str_msg);
     exp_mod_ = gen.new_instance(dist_id_, n_);
     
@@ -201,13 +206,14 @@ void loop_menu(){
                 break;
         }
     }while (op!=0);
+    delete exp_mod_;
 }
 
 
 
-/**********************     KENDALL      *************************/
+**********************     KENDALL      *************************
 
-/*
+
 
 void op_1(){
     int d, m;
@@ -310,8 +316,8 @@ void op_5(){
 
 void op_6(){
     //exact learning
-    if ( dist_id_ == KENDALL_DISTANCE || dist_id_ == ULAM_DISTANCE ){
-        cout<<"No exact learning for Ulam nor Kendall distances. "<<endl;
+    if ( dist_id_ != CAYLEY_DISTANCE){
+        cout<<"No exact learning for this distance. "<<endl;
         return;
     }
     char str_msg[100];
@@ -444,8 +450,7 @@ void op_15(){
     delete [] theta;
 }
 
-/**********************     DISTANCE SPECIFIC      *************************/
-/*
+**********************     DISTANCE SPECIFIC      *************************
 void op_12(){
     if (dist_id_ != ULAM_DISTANCE ){
         cout<<"Ulam distance required"<<endl;
@@ -564,8 +569,59 @@ void op_19(){
 }
 
 
+****************    AUXILIAR TO TEST U.A.R. ***************
 
+int**perms;
+int test_len;
+int*c;
+int test_n ;
+void init_test_uar(int len, int n_){
+    test_len=len+3;
+    test_n = n_;
+    perms = new int*[test_len];
+    c=new int[test_len];
+    for(int i=0;i<test_len;i++)c[i]=0;
+    for(int i=0;i<test_len;i++)perms[i]=new int[n_];
+    for(int i=0;i<test_len;i++)for(int j=0;j<n_;j++) perms[i][j]=-1;
+}
+bool is_equal_to(int*s1, int*s2){
+    for(int i=0;i<test_n;i++)
+        if(s1[i] != s2[i])return false;
+    return true;
+}
+int getIndex(int**matrix, int*sigma){
+    for(int i=0;i<test_len;i++){
+        if(is_equal_to(matrix[i], sigma))return i;
+        if(matrix[i][0]==-1){
+            for(int j=0;j<test_n;j++)matrix[i][j]=sigma[j];
+            return i;
+        }
+    }
+    return -1;
+}
+
+void test_uar(int*sigma){
+    int in = getIndex(perms, sigma);
+    c[in]++;
+}
+void test_uar ( int**sample, int m){
+    for (int i = 0 ; i < m ; i++){
+        int in = getIndex(perms, sample[i]);
+        c[in]++;
+    }
+}
+void test_uar_end(int dist){
+    Generic gen;
+    cout<<"vector "<<endl;
+    for(int i=0;i<test_len;i++){
+        cout<<c[i]<<"  x  ";
+        gen.print_int_vector(perms[i], test_n);
+    }
+    cout<<"If there are not 3 empty .. error!!!"<<endl;
+}
 
 */
+
+
 
 

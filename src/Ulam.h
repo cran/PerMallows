@@ -36,7 +36,10 @@ protected:
     std::vector<long double>num_permus_at_shape_acumul_;
     long double num_partitions_of_n_;
     long double * facts_ ;
-    int*comp_, *inv_ ;//auxiliary for LIS
+    int *comp_, *inv_ ;//auxiliary for LIS
+    //fast lis
+    int * M;
+    int * P ;
 
     
     //http://www.aconnect.de/friends/editions/computer/combinatoricode_e.html#Partitions
@@ -73,78 +76,62 @@ public:
     long double num_permus_at_distance(int d);
 
     int     perm2dist_decomp_vector(int*sigma, int*vec ) {
-        //cout<<"not supported"<<endl;
-        //exit(0);
+        //checked from R cout<<"not supported"<<endl;exit(0);
         return -1;
     }
     void    dist_decomp_vector2perm(int* vec, int* sigma) {
-        //cout<<"not supported"<<endl;
-        //exit(0);
-        return;
+        //checked from R cout<<"not supported"<<endl;exit(0);
     }
     void    multistage_sampling(int m, double*theta, int**samples) {
-        //cout<<"not supported"<<endl;
-        //exit(0);
-        return;
+        //checked from R cout<<"not supported"<<endl;exit(0);
     }
     void    gibbs_sampling(int m, double *theta, int model, int **samples) ;
     double  estimate_consensus_exact  (int model, int m, int **samples, int*sigma_0_ini, int *sigma_0){
-        //cout<<"not supported"<<endl;
-        //exit(0);
+        //checked from R cout<<"not supported"<<endl;exit(0);
         return -1;
     }
     
     /***    end virtual     ****/
-//fast lis
-    int* M;;
-    int* P ;
+    //fast lis
     int search_LIS(int* M, int* A, int i, int L ) ;
 
     Ulam(int n){
         n_ = n;
-        shapes_of_n_ = new std::vector<Ferrers_diagram*>();
         num_partitions_of_n_ = -1;
+        shapes_of_n_ = new std::vector<Ferrers_diagram*>();
         first_index_at_dist_ = new long double [ n_ ];
         num_permus_per_dist_ = new long double [ n_ ];
         for (int i = 0 ; i < n_ ; i++) num_permus_per_dist_[ i ] = 0 ;
         facts_     = new long double [ n + 1 ];
         facts_[0]=1;
-        for (int i=1;i< n + 1 ;i++)  facts_[i] = facts_[i-1] * i;
-        comp_=new int[n_];
-        inv_ = new int[ n_];
-        M = new int[n_];
-        P = new int[n_];
-//cout<<"kkkkkkkkk1"<<endl;
+        for (int i = 1 ; i < n + 1 ;i++)
+            facts_[i] = facts_[i-1] * i;
+        comp_   = new int[n_];
+        inv_    = new int[ n_];
+        M       = new int[n_];
+        P       = new int[n_];
     }
     ~Ulam(){
-      //std::for_each(shapes_of_n_->begin(), shapes_of_n_->end(), []( Ferrers_diagram* p) { delete p; });
         for ( int i = 0 ; i < shapes_of_n_->size() ; i++ ) delete shapes_of_n_->at(i);
         shapes_of_n_->clear();
         delete shapes_of_n_ ;
         delete [] first_index_at_dist_;
         delete [] num_permus_per_dist_;
         delete [] facts_;
-        //cout<<"kkkkkkkkk2"<<endl;
         delete [] comp_;
         delete [] inv_;
         delete [] M;
         delete [] P;
-
     }
+
     int     distance(int*sigma){  return n_ - longest_increasing_subsequence(sigma);    }
-    int     integer_partitions(int n);
+
     long double num_permus_at_distance_approx(int d);
 
     double  expectation(double theta);
     void    expectation(double *theta, double *expect){
-        //cout<<"not supported"<<endl;
-        //exit(0);
-        return;
+        //checked from R cout<<"not supported"<<endl;exit(0);
     }
-    
-    
-    
-    
 
 };
 #endif /* defined(__perms_mallows__Ulam__) */

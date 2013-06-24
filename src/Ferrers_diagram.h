@@ -25,9 +25,6 @@ private:
 
     long double hook_length_;
     long double number_of_permutations_;
-    
-//    int     desc_length_;//bratteli
-//    std::vector<Ferrers_diagram*>descendants_;
 
     int     **syt_;//greene_niejenhuis_wilf
     int     *ferrers_shape_dynamic_; // for the random generation of SYT
@@ -90,7 +87,7 @@ public:
     
     int get_num_cells_down(int i , int j);
     
-    void SYT_toStr(){
+    /*void SYT_toStr(){
         for ( int i = 0 ; i < ferrers_shape_length_  ; i++){
             for ( int j = 0 ; j < ferrers_shape_[i]  ; j++)
                 cout<< syt_[i ][ j ]<<" ";
@@ -103,7 +100,7 @@ public:
         cout<<"Partition of "<<partition_of_n_<<": ";
         gen.print_int_vector(ferrers_shape_, ferrers_shape_length_);
         cout<<"\t hook length  "<<hook_length_<<"\n";
-    }
+    }*/
 
 };
 

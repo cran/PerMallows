@@ -53,7 +53,8 @@ extern "C" {
     void count_permus_at_dist (int*dist_id, int*n, int*d, double*res) {
         Generic gen;
         Exponential_model * exp_mod = gen.new_instance(*dist_id, *n);
-        *res= (double) exp_mod->num_permus_at_distance(*d);
+        if (*d < 0 || *d > exp_mod->maximum_distance()) *res = 0;
+        else *res= (double) exp_mod->num_permus_at_distance(*d);
         delete exp_mod;
         PutRNGstate();
     }
@@ -97,7 +98,7 @@ extern "C" {
     void save_counts_to_files ( int*n){
       GetRNGstate();
         Ulam_disk * ul = new Ulam_disk(*n);
-        ul->save_counts_to_file();
+        ul->save_counts_to_file_bin();
         delete ul;
         PutRNGstate();
     }
@@ -260,7 +261,7 @@ extern "C" {
         
         GetRNGstate();
         SEXP Rval;
-        int i, a, b;
+        int i;
         PROTECT(Rval = allocVector(INTSXP, 1));
         for (i = 0; i < 1; i++)
             INTEGER(Rval)[i ] = i;
@@ -302,7 +303,7 @@ extern "C" {
         GetRNGstate();
         //model (model_var)  MM=0 ;;;; 1 =GMM
         SEXP Rval;
-        int i, a, b;
+        int i;
         double likeli = -1.0;
         PROTECT(Rval = allocVector(INTSXP, 1));
         for (i = 0; i < 1; i++)

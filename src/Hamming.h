@@ -30,7 +30,6 @@ public:
         if (model == MALLOWS_MODEL ){
             //cout<<"No approx learning for MM under the Hamming distance. Try the exact learning. "<<endl;
             //exit(0);
-            return;
         }else{
             double likeli;
             estimate_consensus_approx_gmm( m, samples, sigma_0, &likeli);
@@ -38,9 +37,7 @@ public:
     }
     double  estimate_consensus_exact  (int model, int m, int **samples, int*sigma_0_ini, int *sigma_0){
         if (model == MALLOWS_MODEL ) estimate_consensus_exact_mm( m, samples, sigma_0);
-        else {
-            //cout<<"No exact learning for WMM under the Hamming distance. Try the approx learning. "<<endl;
-        }
+        //else {cout<<"No exact learning for WMM under the Hamming distance. Try the approx learning. "<<endl;}
         return 0;
     }
     long double get_likelihood(int m, int** samples, int model, int * sigma_0) ;
@@ -52,33 +49,36 @@ public:
     void    dist_decomp_vector2perm(int* vec, int* sigma) ;
 
     /***********    end virtual    **************/
-    
-    Hamming(int n){n_ = n; deran_num_ = NULL;
+    void learning_experiments_approx_2(int m, int **freq_neg, int *time_lap, int*time_vns, int *sigma_0, int * dist_lap, int * dist_vns, double * likeli_lap, double * likeli_vns);
+    void learning_experiments_approx_1(int m, double *theta, int ** freq_neg );
+
+    /******     experiments ***/
+
+    Hamming(int n){n_ = n; 
         Generic gen;
         esp_red_   = new long  double[ n + 1 ];
         esp_ini_   = new long  double[ n + 1 ];        
         esp_red_yes_a_   = new long  double[ n + 1 ];
-        g_n_       = new long double*[ n + 1 ];
         facts_     = new long double [ n + 1 ];
-        facts_[0]=1;
-        for (int i=1;i<=n;i++)
-            facts_[i] = facts_[i-1] * i;
+        facts_[ 0 ] = 1 ;
+        for (int i = 1 ; i <= n ; i++)
+            facts_[i] = facts_[ i - 1 ] * i;
+        g_n_      = new long double*[ n + 1 ];
         aux_esp_  = new long double *[ n + 1 ];//esp
         t_        = new long double  [ n + 1 ];//esp
-        t_sampling_ = new long double [ n_ ];
-        deran_num_ = new double[n_+1];
-        deran_num_[0]= 1;
-        deran_num_[1]=0;
+        t_sampling_= new long double [ n_ ];
+        deran_num_ = new double [ n_ + 1 ];
+        deran_num_[ 0 ] = 1;
+        deran_num_[ 1 ] = 0;
         for (int i = 2 ; i <= n_ ; i ++)
             deran_num_[i] = deran_num_[i-1]*(i-1) + deran_num_[i-2]*(i-1);
-        //Generic gen; gen.print_double_vector(deran_num, n_+1);
         for ( int i = 0 ; i < n ; i ++ )
             t_sampling_[ i ] = 0;//(long double)exp( theta[ i ]) - 1 ;
-        
+
         gen.init_factorials(n);
         for ( int i = 0 ; i < n + 1 ; i ++ ){
-            g_n_ [ i ] = new long double [ n_ + 1 ];
-            aux_esp_[ i ] = new long double[ n + 1 ];
+            g_n_ [ i ]      = new long double [ n_ + 1 ];
+            aux_esp_[ i ]   = new long double [ n_ + 1 ];
             for ( int j = 0 ; j <= i ; j ++)
                 g_n_[ i ][ j ] = gen.count_permus_with_at_least_k_unfixed_points(i, j);
             for ( int j = 0 ; j <= n ; j ++)
@@ -104,6 +104,10 @@ public:
     }
         
     
+    
+    void multistage_sampling_experiments(int m, double*theta, double*error, double*time);
+    void distances_sampling_experiments(int m, double theta, double *error, double*time) ;
+    void gibbs_sampling_experiments(int m, double*theta, double *error, double*time);
     
     void sample(double* theta, int m, int**samples);
 
@@ -137,13 +141,13 @@ public:
     long double get_likelihood_from_h(int m, int model, double *theta, double * h_avg);
 
 
-private:
+protected:
     
     //int n_;
     long double *esp_red_       ;//compute marginal
     long double *esp_ini_   ;
     long double *esp_red_yes_a_;//compute marginal
-    double theta_acum_not_in_A; //compute marginal
+    long double theta_acum_not_in_A; //compute marginal
     int b_ ;                    //compute marginal
     long double * t_sampling_;  //compute marginal: 0..n-1
     long double *facts_;
@@ -163,11 +167,11 @@ private:
     
     void    generate_permu_from_list(int*ran, int dist, int*sigma);
     
-    void    variable_neighborhood_search(int m, int **freq, int*sigma_0, double*f_eval);
+/*    void    variable_neighborhood_search(int m, int **freq, int*sigma_0, double*f_eval);
     void    local_search_swap_gmm  ( int m, int ** samples, int *sigma_0, double * f_eval);
     void    local_search_insert_gmm( int m, int ** samples, int *sigma_0, double * f_eval);
     void    bound_consensus (int m, int pos, int ** freq, int*sigma_0, int*sigma_0_inv, double*h_avg,int* max_index_in_col, double*h_avg_bounded,int* max_index_in_col_bounded);
-
+*/
 
     void quasyIndepTest(double* theta);
     int indexOfPermu(int* sigma){//chapu
