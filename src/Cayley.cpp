@@ -4,7 +4,7 @@
 //
 //  Created by Ekhine Irurozki on 20/06/13.
 //  Copyright (c) 2013 Ekhine Irurozki. All rights reserved.
-//
+
 #include <R.h>
 #include "Cayley.h"
 #include "Generic.h"
@@ -73,10 +73,11 @@ double Cayley::get_theta_log_likelihood(int m, int *x_acumul, int *x_acumul_vari
     return (-1 * likeli);
 }
 void Cayley::get_x_lower_bound_freq(int m, int ** samples_inv_freq, int ini_pos, int *min_bound_x){
+  //min bound
     int *freq = new int[ n_ ]; for (int i = 0 ; i < n_; i ++ )freq[ i ] = 0;
     int maxFreq= 0;
-    for(int j=ini_pos;j<n_-1;j++){
-        for(int s= 0;s<n_;s++){
+    for(int j = ini_pos ; j < n_ - 1 ; j++){
+        for(int s = 0 ; s < n_ ; s++){
             freq[ s ] += samples_inv_freq[ j ][ s ];
             if(freq[ s ]> maxFreq)
                 maxFreq=freq[ s ];
@@ -85,6 +86,59 @@ void Cayley::get_x_lower_bound_freq(int m, int ** samples_inv_freq, int ini_pos,
         if(min_bound_x[ j ]<0)min_bound_x[ j ] = 0;
     }
     delete []freq;
+}
+double Cayley::get_bound_likeli(int m, int ** samples_inv_freq, int ini_pos, int* x , int*sigma_0){
+  //min max bound
+    double likelihood = 0;
+    int *freq = new int[ n_ ]; for (int i = 0 ; i < n_; i ++ )freq[ i ] = 0;
+    int maxFreq= 0, minFreq = m, j ;
+    double li_min, li_max;
+    double xav, theta_estim, psi, likeli;
+
+    //likeli prev of the ones known
+    for (int i = 0 ; i < ini_pos && i < n_-1; i++){
+        j=i+1;
+        xav = (double) x[i]/m;
+        theta_estim = log(n_-j)-log(xav / (1-xav));
+        psi =1+(n_-j)*exp(-theta_estim);
+        likeli = x[i] * theta_estim + m * log(psi);
+        likelihood -= likeli;
+    }
+    //likeli of the bound
+    for(int i = ini_pos ; i < n_ - 1 ; i++){
+        int j = i+1;
+        for(int s = 0 ; s < n_ ; s++)
+            freq[ s ] += samples_inv_freq[ i ][ s ];
+        for(int s = 0 ; s < n_ ; s++){
+            if( freq[ s ] > maxFreq)    maxFreq=freq[ s ];
+            if( sigma_0[ s ] < 0 && samples_inv_freq[ i ][ s ] < minFreq ) minFreq = samples_inv_freq[ i ][ s ];
+        }
+        if ( minFreq == 0 ) minFreq = 1;
+        if ( maxFreq == m ) maxFreq = m-1;
+        maxFreq = m - maxFreq;
+        minFreq = m - minFreq;
+        
+        //the likelihood on the min(x), decreasing part of L
+        xav = (double) maxFreq/m;
+        theta_estim = log(n_-j)-log(xav / (1-xav));
+        psi =1+(n_-j)*exp(-theta_estim);
+        likeli = maxFreq * theta_estim + m * log(psi);
+        li_min = -likeli;
+        
+        //the likelihood on the min(x), increasing part of L
+        xav = (double) minFreq/m;
+        theta_estim = log(n_-j)-log(xav / (1-xav));
+        psi =1+(n_-j)*exp(-theta_estim);
+        likeli = minFreq * theta_estim + m * log(psi);
+        li_max = -likeli;
+        
+        likelihood += li_min > li_max ? li_min : li_max;
+        //cout<<(double) maxFreq/m<<" "<<(double) minFreq/m<<" - "<<maxFreq<<" "<<minFreq<<" - "<<li_max<<" "<<li_min<<endl;
+        //cout<<maxFreq<<" "<<minFreq<<endl;
+
+    }
+    delete []freq;
+    return likelihood;
 }
 void Cayley::get_x_lower_bound(int m, int ** sample, int ini_pos, int *x_min_bound){
     int *freq = new int[ n_ ]; for (int i = 0 ; i < n_; i ++ )freq[ i ] = 0;
@@ -456,6 +510,7 @@ long double Cayley::get_likelihood(int m, int** samples, int model, int * sigma_
             for(int j = 0 ; j < n_ - 1 ; j++) x_acumul[ j ] += x[ j ];
         }
         get_theta_log_likelihood(m, x_acumul, NULL, theta);//theta is an array of length n
+        //cout<<"likeli(Cayley::estimate_theta) "<<get_theta_log_likelihood(m, x_acumul, NULL, theta)<<endl;
         delete [] x;
         delete [] x_acumul;
         delete [] inv;
@@ -603,19 +658,13 @@ double Cayley::estimate_consensus_exact_gmm_core(int m, int pos, int ** samples,
                 //in this case the distance has incresed in one, x[maxItemInCylce] was 0 and now = 1
             }
             
-            int *xbound = new int[ n_ ];
-            for (int i = 0 ; i < n_; i ++ )xbound[ i ] = 0;
-            get_x_lower_bound_freq(m, samples_inv_freq, pos+1, xbound);
-            if(trace){for (int i = 0 ; i < n_; i ++ ) cout<<xbound[ i ]<<" ";cout<<" xbound, pos: "<<pos<<endl;}
-            
             for (int i = 0 ; i < n_; i ++ )x_acum_var[ i ] =x_acum[ i ];
             x_acum_var[pos] += xIncr;
-            double likeliBound=get_theta_log_likelihood(m, x_acum_var, xbound, theta_estim);
-            delete []xbound;
+            double likeliBound = get_bound_likeli(m, samples_inv_freq, pos+1, x_acum_var, current_sigma);
             
             if(likeliBound >= (*best_likeli) )
                 visited_nodes += estimate_consensus_exact_gmm_core(m, pos+1, samples, samples_inv, samples_inv_freq, x_acum_var, current_sigma, current_sigma_inv, likeliBound, best_sigma, best_likeli);
-            //else {cout<<"bounded at "<<pos<<" - ";for (int i = 0 ; i < n; i ++ )cout<<current_sigma[ i ]<<" ";cout<<endl;}
+            //else {cout<<"bounded at "<<pos<<" - ";for (int i = 0 ; i < n_; i ++ )cout<<current_sigma[ i ]<<" ";cout<<endl;}
             current_sigma_inv[pos] =-1;
             current_sigma[it] =-1;
             for (int s = 0 ; s < m ; s ++){

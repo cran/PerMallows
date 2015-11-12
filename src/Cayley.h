@@ -29,6 +29,8 @@ protected:
     
     void get_x_lower_bound_freq(int m, int** samples_inv_freq, int ini_pos, int*min_bound_x);
     
+    double get_bound_likeli(int m, int ** samples_inv_freq, int ini_pos, int* x , int*sigma_0);
+    
     void get_x_lower_bound(int m, int** sample, int ini_pos, int*x_min_bound);
     
     void generate_permu_with_k_cycles(int n, int k, int*sigma);
@@ -101,6 +103,8 @@ public:
     long double num_permus_at_distance(int d);
     int     perm2dist_decomp_vector(int*sigma, int*vec ) ;
     void    dist_decomp_vector2perm(int* vec, int* sigma) ;
+
+
     
     virtual double  expectation(double theta);
     virtual void    expectation(double *theta, double *expect) ;
@@ -150,6 +154,8 @@ public:
     
     long double count_permus_with_cycles(int d);
     
+    void print_stirling_matrix();
+        
     int distance_to_sample(int** samples, int m, int* sigma);
         
     long double count_permus_by_x(int*x);
