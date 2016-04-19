@@ -1,6 +1,6 @@
-e93c3ad451495ce99fb011e734be8a65 *DESCRIPTION
+660835df6a78989313fa2135cc3bd554 *DESCRIPTION
 e610b291bb68cfdc27138d0b540d7570 *NAMESPACE
-fe6245c5b86dc51d798f5e8660448029 *R/PerMallows.R
+30b3c7f1889eafde3dbd755b440041f0 *R/PerMallows.R
 b735545afc86d8ad4f3121b354acd421 *data/data.apa.rda
 dabbfc7bcdf2499be644c9a2977ac235 *data/data.order.rda
 0ae95fd5fe72fc8ddb6b7d358a2e1c74 *data/perm.sample.med.rda
@@ -43,14 +43,14 @@ eb607aa8a29141410ab25eecfc1b6538 *man/permutations.of.Rd
 ba6ec212b21aed11ec791c0036ab1092 *man/rmm.Rd
 26808b43b1aacfd3d7abc729a52ab09b *man/runif.permutation.Rd
 40b915ad41bfad2fc34369b39f3913c7 *man/swap.Rd
-295aa1f31d51753cafa9fc1d7fa2475d *src/Cayley.cpp
+4b2ed44d1a38ce9b69ac8655d2a7a3de *src/Cayley.cpp
 ea8ea86d0ab29aa7f7ad97d666efc8e1 *src/Cayley.h
 07589b051789bf99eb9d0e52a39f812a *src/Exponential_model.h
 209247c0c903c9081689acf6f04c4fb7 *src/Ferrers_diagram.cpp
 d385fc1b409fab2f44ab4bd23b5aae44 *src/Ferrers_diagram.h
 6e292fa79ab33ff447321e0be5a86fb2 *src/Generic.cpp
 f5d8c8695ea933a7d7f9c0d17db62d57 *src/Generic.h
-292a34c1f7fd51c10f7c66daa3e8e341 *src/Hamming.cpp
+93daefbf8dafe8e7b69e13411577bcce *src/Hamming.cpp
 0515f8b3ef008b3f928bb418bc2b76cd *src/Hamming.h
 c314421a6d853c70efeb2d636caced5c *src/Kendall.cpp
 7e045aeec3f00579f105424dad466eb9 *src/Kendall.h

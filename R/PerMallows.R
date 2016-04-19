@@ -465,7 +465,7 @@ rmm <- function(n, sigma0, theta, dist.name="kendall", sampling.method=NULL, dis
   else if (algorithm_id == 1 || algorithm_id == 2 ){
     theta <- rep(theta,perm.length)
     sam <- .Call("sampling_multi_gibbs_cayley",dist_id,  perm.length, num.perms, theta, .GENERALIZED.MALLOWS.MODEL, algorithm_id)
-  }else stop("Choose one of these algorithms: Distances, Gibbs, Multistage")
+  }else stop("Choose one of these algorithms: distances, gibbs, multistage")
   if(!all(sigma0 == identity.permutation(perm.length)) ) 
     sam <- compose(sam, sigma0)
   return(sam)
@@ -500,7 +500,7 @@ rgmm <- function(n, sigma0, theta, dist.name="kendall", sampling.method="multist
   
   if ( sampling.method == "multistage" || sampling.method == "multistage")  algorithm_id = 1
   else if ( sampling.method == "gibbs"      || sampling.method == "gibbs")  algorithm_id = 2
-  else stop("Choose one of these sampling.method: Multistage, Gibbs")
+  else stop("Choose one of these sampling.method: multistage, gibbs")
   
   sam <- .Call("sampling_multi_gibbs_cayley",dist_id, perm.length, num.perms, theta, .GENERALIZED.MALLOWS.MODEL, algorithm_id);
   #browser()
@@ -592,7 +592,11 @@ lgmm <- function(data, sigma_0_ini =identity.permutation(dim(data)[2]), dist.nam
   
   if (estim_var == 0 && dist_id != .CAYLEY.DISTANCE ) 
     stop ("Exact leraning only for Cayley")
+  print("desde r1 ")
+  print(sigma_0_ini)
   sigma0 <- .Call("consensus", dist_id, data, 1, estim_var, sigma_0_ini)
+  print("desde r 2")
+  print(sigma0)
   the <- .Call("estimate_theta", dist_id, perm.length, num.perms, sigma0, data, 1)
   if ( dist_id == 2 ) theta.len = perm.length
   else  theta.len = perm.length - 1
@@ -1060,3 +1064,4 @@ NULL
 #' @format
 #' Each row is a permtuation
 NULL
+

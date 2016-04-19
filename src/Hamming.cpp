@@ -484,11 +484,13 @@ void Hamming::estimate_consensus_approx_gmm(int m, int **samples, int *sigma_0, 
         for (int j = 0 ; j < n_ ; j ++)
             freq[ j ][ samples[ i ][ j ] - FIRST_ITEM ]--;//for the lap, minimize
     
+    //freq[i,j]=sample[i,j]
+    
     //int cost = -1 * lap.lap(n_, freq, rows, cols, u, v);
     lap.lap(n_, freq, rows, cols, u, v);
     for (int i = 0 ; i < n_ ; i++){
         sigma_0[ i ] = rows[i] + FIRST_ITEM;
-        sigma_0_inv[ (rows[i] + FIRST_ITEM )- FIRST_ITEM] = i + FIRST_ITEM;
+        sigma_0_inv[ (rows[i] + FIRST_ITEM ) - FIRST_ITEM ] = i + FIRST_ITEM;
     }
     
     for (int i = 0 ; i < n_ ; i++)
