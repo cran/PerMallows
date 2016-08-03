@@ -265,6 +265,7 @@ freq.matrix <- function(perm){
 #' @param theta n dimensional distance decomposition vector with the dispersion parameters
 #' @return The marginal probability
 #' @export
+#' @references "Ekhine Irurozki, Borja Calvo, Jose A. Lozano (2016). PerMallows: An R Package for Mallows and Generalized Mallows Models. Journal of Statistical Software, 71(12), 1-30. doi:10.18637/jss.v071.i12"
 #' @examples
 #' marginal(c(1,0,1,NA,NA), c(0.1, 0.3, 0.7, 0.1, 1))
 #' marginal(c(NA,0,1,NA,NA,0), c(0.1, 0.3, 0.7, 0.1, 0.7, 1))
@@ -287,6 +288,7 @@ marginal <- function(h, theta){
 #' @param dist.name optional name of the distance used in the MM. One of: kendall (default), cayley, hamming, ulam
 #' @return The expected distance under the MM
 #' @export
+#' @references "Ekhine Irurozki, Borja Calvo, Jose A. Lozano (2016). PerMallows: An R Package for Mallows and Generalized Mallows Models. Journal of Statistical Software, 71(12), 1-30. doi:10.18637/jss.v071.i12"
 #' @examples
 #' expectation.mm( 1, 7, "kendall" )
 #' expectation.mm( 2, 5, "cayley" )
@@ -308,6 +310,7 @@ expectation.mm <- function(theta, perm.length,  dist.name="kendall"){
 #' @return The expected distance decomposition vector under the GMM
 #' @param dist.name optional name of the distance used in the GMM. One of: kendall (default), cayley, hamming
 #' @export
+#' @references "Ekhine Irurozki, Borja Calvo, Jose A. Lozano (2016). PerMallows: An R Package for Mallows and Generalized Mallows Models. Journal of Statistical Software, 71(12), 1-30. doi:10.18637/jss.v071.i12"
 #' @examples
 #' expectation.gmm(c(0.38, 0.44, 0.1, 0.2, 1, 0.1))
 #' expectation.gmm(c(2, 2, 2, 2),"cayley")
@@ -401,6 +404,7 @@ dgmm <- function(perm, sigma0=identity.permutation(length(perm)), theta, dist.na
 #' @param alert check consistency of the parameters. TRUE by default
 #' @return A matrix contaning a sample of permutations from the specified ditribution
 #' @export
+#' @references "Ekhine Irurozki, Borja Calvo, Jose A. Lozano (2016). PerMallows: An R Package for Mallows and Generalized Mallows Models. Journal of Statistical Software, 71(12), 1-30. doi:10.18637/jss.v071.i12"
 #' @examples
 #' rmm(2,c(1,2,3,4,5),1,"kendall", "distances")
 #' rmm(2,c(1,2,3,4,5),1,"cayley", "distances")
@@ -482,6 +486,7 @@ rmm <- function(n, sigma0, theta, dist.name="kendall", sampling.method=NULL, dis
 #' @param sampling.method optional name of the sampling algorithm. One of: multistage, gibbs (default)
 #' @return A matrix contaning a sample of permutations from the specified ditribution
 #' @export
+#' @references "Ekhine Irurozki, Borja Calvo, Jose A. Lozano (2016). PerMallows: An R Package for Mallows and Generalized Mallows Models. Journal of Statistical Software, 71(12), 1-30. doi:10.18637/jss.v071.i12"
 #' @examples
 #' rgmm(2,c(1,2,3,4,5),c(1,1,1,1),"kendall", "multistage")
 #' rgmm(2,c(1,2,3,4,5),c(1,1,1,1),"cayley", "multistage")
@@ -523,6 +528,7 @@ rgmm <- function(n, sigma0, theta, dist.name="kendall", sampling.method="multist
 #' @return A list with the parameters of the estimated distribution: the
 #' mode and the dispersion parameter
 #' @export
+#' @references "Ekhine Irurozki, Borja Calvo, Jose A. Lozano (2016). PerMallows: An R Package for Mallows and Generalized Mallows Models. Journal of Statistical Software, 71(12), 1-30. doi:10.18637/jss.v071.i12"
 #' @examples
 #' data <- matrix(c(1,2,3,4, 1,4,3,2, 1,2,4,3), nrow = 3, ncol = 4, byrow = TRUE)
 #' lmm(data, dist.name="kendall", estimation="approx")
@@ -572,6 +578,7 @@ lmm <- function(data, sigma_0_ini =identity.permutation(dim(data)[2]), dist.name
 #' @return A list with the parameters of the estimated distribution: the
 #' mode and the dispersion parameter vector
 #' @export
+#' @references "Ekhine Irurozki, Borja Calvo, Jose A. Lozano (2016). PerMallows: An R Package for Mallows and Generalized Mallows Models. Journal of Statistical Software, 71(12), 1-30. doi:10.18637/jss.v071.i12"
 #' @examples
 #' data <- matrix(c(1,2,3,4, 1,4,3,2, 1,2,4,3), nrow = 3, ncol = 4, byrow = TRUE)
 #' lgmm(data, dist.name="kendall", estimation="approx")
@@ -592,11 +599,7 @@ lgmm <- function(data, sigma_0_ini =identity.permutation(dim(data)[2]), dist.nam
   
   if (estim_var == 0 && dist_id != .CAYLEY.DISTANCE ) 
     stop ("Exact leraning only for Cayley")
-  print("desde r1 ")
-  print(sigma_0_ini)
   sigma0 <- .Call("consensus", dist_id, data, 1, estim_var, sigma_0_ini)
-  print("desde r 2")
-  print(sigma0)
   the <- .Call("estimate_theta", dist_id, perm.length, num.perms, sigma0, data, 1)
   if ( dist_id == 2 ) theta.len = perm.length
   else  theta.len = perm.length - 1
