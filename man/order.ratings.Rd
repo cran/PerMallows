@@ -19,4 +19,3 @@ a permutation
 \examples{
 order.ratings(c(0.1, 4, 0.5, -4))
 }
-

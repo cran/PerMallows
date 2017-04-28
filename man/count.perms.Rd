@@ -38,4 +38,3 @@ count.perms(perm.length = len, dist.value = len, dist.name = "h")
 num.cycles <- 1 
 count.perms(perm.length = len, dist.value = len - num.cycles, dist.name = "c") 
 }
-

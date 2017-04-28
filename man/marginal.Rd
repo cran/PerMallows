@@ -26,4 +26,3 @@ marginal(c(NA,0,1,NA,NA,0), c(0.1, 0.3, 0.7, 0.1, 0.7, 1))
 \references{
 "Ekhine Irurozki, Borja Calvo, Jose A. Lozano (2016). PerMallows: An R Package for Mallows and Generalized Mallows Models. Journal of Statistical Software, 71(12), 1-30. doi:10.18637/jss.v071.i12"
 }
-

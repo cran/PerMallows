@@ -19,4 +19,3 @@ This function generates the identity permutation of a given number of items
 identity.permutation(3)
 identity.permutation(7)
 }
-

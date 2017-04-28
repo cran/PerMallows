@@ -21,4 +21,3 @@ Generate a collection of n permutations uniformly at random
 \examples{
 runif.permutation(1,5)
 }
-

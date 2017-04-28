@@ -34,4 +34,3 @@ lgmm(data, dist.name="hamming", estimation="approx")
 \references{
 "Ekhine Irurozki, Borja Calvo, Jose A. Lozano (2016). PerMallows: An R Package for Mallows and Generalized Mallows Models. Journal of Statistical Software, 71(12), 1-30. doi:10.18637/jss.v071.i12"
 }
-

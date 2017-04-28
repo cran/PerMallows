@@ -15,4 +15,3 @@ Given a list with the cycles of a permutation, displays them in the standard cyc
 \examples{
 cycle2str(perm2cycles(c(1,5,2,3,4)))
 }
-

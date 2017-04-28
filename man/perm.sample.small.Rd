@@ -8,4 +8,3 @@
 \description{
 A rda file containing a sample of permutations
 }
-

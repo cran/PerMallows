@@ -32,4 +32,3 @@ rdist(n = 1, perm.length = len, dist.value = len, "h") #derangement
 cycles <- 2
 rdist(n = 1, perm.length = len, dist.value = len - cycles, "c") #permutation with 2 cycles
 }
-

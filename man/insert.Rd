@@ -23,4 +23,3 @@ Given a permutation and two positions i, j, move item in position i to position 
 insert(c(1,2,3,4,5),5,2)
 insert(c(1,2,3,4,5),2,5)
 }
-

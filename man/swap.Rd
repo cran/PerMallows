@@ -22,4 +22,3 @@ Given a permutation and two position, swap both positions
 \examples{
 swap(c(1,2,3,4,5),2,5)
 }
-

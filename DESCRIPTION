@@ -1,8 +1,8 @@
 Package: PerMallows
 Type: Package
 Title: Permutations and Mallows Distributions
-Version: 1.12
-Date: 2016-08-02
+Version: 1.13
+Date: 2017-04-28
 Author: Ekhine Irurozki <ekhine.irurozqui@ehu.eus>, Borja Calvo
     <borja.calvo@ehu.eus>, Jose A. Lozano <ja.lozano@ehu.eus>
 Maintainer: Ekhine Irurozki <ekhine.irurozqui@ehu.eus>
@@ -19,8 +19,8 @@ License: GPL (>= 2)
 Depends: Rcpp (>= 0.10.3)
 Imports: utils
 LinkingTo: Rcpp
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1
 NeedsCompilation: yes
-Packaged: 2016-08-03 07:41:49 UTC; ekhine
+Packaged: 2017-04-28 19:46:08 UTC; ekhine
 Repository: CRAN
-Date/Publication: 2016-08-03 11:13:54
+Date/Publication: 2017-04-28 23:19:26 UTC

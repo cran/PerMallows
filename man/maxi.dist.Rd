@@ -23,4 +23,3 @@ maxi.dist(4,"cayley")
 maxi.dist(10,"ulam")
 maxi.dist(4)
 }
-

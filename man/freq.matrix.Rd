@@ -20,4 +20,3 @@ permutation, calculate the proportion of them that have each item in each positi
 \examples{
 freq.matrix(c(1,3,2,4,5))
 }
-

@@ -33,4 +33,3 @@ dmm(c(1,3,2,4), theta=0.1, dist.name="cayley")
 dmm(c(1,3,2,4), theta=0.1, dist.name="hamming")
 dmm(c(1,3,2,4), theta=0.1, dist.name="ulam")
 }
-

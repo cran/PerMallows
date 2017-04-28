@@ -18,4 +18,3 @@ Factor a given a permutation in the set of independent cycles
 \examples{
 perm2cycles(c(1,5,2,3,4))
 }
-

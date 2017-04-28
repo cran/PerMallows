@@ -20,4 +20,3 @@ are going to be computted more than once
 \examples{
 generate.aux.files(4)
 }
-

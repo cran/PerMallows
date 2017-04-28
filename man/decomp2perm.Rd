@@ -23,4 +23,3 @@ decomp2perm(c(1,0,1,0,0), "kendall")
 decomp2perm(c(1,0,1,0,0), "cayley")
 decomp2perm(c(1,0,1,0,0), "hamming")
 }
-

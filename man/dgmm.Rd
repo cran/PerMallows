@@ -32,4 +32,3 @@ sum(log.prob)
 dgmm (c(1,2,3,4), theta=c(1,1,1))
 dgmm (c(1,2,3,4), theta=c(1,1,1), dist.name="cayley")
 }
-

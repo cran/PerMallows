@@ -18,4 +18,3 @@ Get the permutation as a vector given the set of cycles in which it factorizes
 \examples{
 cycles2perm(perm2cycles(c(1,5,2,3,4)))
 }
-

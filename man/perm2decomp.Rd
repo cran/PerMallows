@@ -22,4 +22,3 @@ perm2decomp(c(1,2,4,3,5), "kendall")
 perm2decomp(c(1,2,4,3,5), "cayley")
 perm2decomp(c(1,2,4,3,5), "hamming")
 }
-

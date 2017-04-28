@@ -20,4 +20,3 @@ Given a permutation and a position, swap positions i and i+1
 \examples{
 inversion(c(1,2,3,4,5),2)
 }
-

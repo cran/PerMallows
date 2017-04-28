@@ -20,4 +20,3 @@ checks if each row is a proper permutation
 path = system.file("test.txt", package="PerMallows")
 sample = read.perms(path)
 }
-

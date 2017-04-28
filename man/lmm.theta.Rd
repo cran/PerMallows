@@ -32,4 +32,3 @@ lmm.theta(data, dist.name="cayley", sigma_0=c(1,4,3,2))
 lmm.theta(data, dist.name="hamming")
 lmm.theta(data, dist.name="ulam")
 }
-
