@@ -4,7 +4,9 @@
 \name{data.apa}
 \alias{data.apa}
 \title{Sample of permutations APA}
-\format{Each row is a permtuation}
+\format{
+Each row is a permutation
+}
 \description{
 A rda file containing a sample of permutations of the American Psychology Association
 }

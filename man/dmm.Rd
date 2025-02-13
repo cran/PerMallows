@@ -4,8 +4,12 @@
 \alias{dmm}
 \title{Calculate the probability of a permutation in a MM}
 \usage{
-dmm(perm, sigma0 = identity.permutation(length(perm)), theta,
-  dist.name = "kendall")
+dmm(
+  perm,
+  sigma0 = identity.permutation(length(perm)),
+  theta,
+  dist.name = "kendall"
+)
 }
 \arguments{
 \item{perm}{permutation whose probability is asked for}

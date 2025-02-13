@@ -18,6 +18,7 @@
 #include <Rinternals.h>
 #include <Rdefines.h>
 
+
 /* dist:id
  0: cayley
  1: kendall
@@ -132,11 +133,11 @@ extern "C" {
         for (int i = 0; i < m; i++)
             for (int j = 0; j < n; j++)
                 REAL(Rval)[i + m * j] = sample[i][j];
-        UNPROTECT(1);
         for (int i = 0 ; i < m ;  i ++ ) delete [] sample[ i ];
         delete [] sample;
         delete exp_mod;
         PutRNGstate();
+        UNPROTECT(1);
         return Rval;
     }
     
@@ -156,11 +157,11 @@ extern "C" {
         for (int i = 0; i < m; i++)
             for (int j = 0; j < n; j++)
                 REAL(Rval)[i + m * j] = sample[i][j];
-        UNPROTECT(1);
         for (int i = 0 ; i < m ;  i ++ ) delete [] sample[ i ];
         delete [] sample;
         delete exp_mod;
         PutRNGstate();
+        UNPROTECT(1);
         return Rval;
     }
     
@@ -196,11 +197,11 @@ extern "C" {
         for (int i = 0; i < m; i++)
             for (int j = 0; j < n; j++)
                 REAL(Rval)[i + m * j] = sample[i][j];
-        UNPROTECT(1);
         for (int i = 0 ; i < m ;  i ++ ) delete [] sample[ i ];
         delete [] sample;
         delete exp_mod;
         PutRNGstate();
+        UNPROTECT(1);
         return Rval;
     }
     
@@ -247,12 +248,12 @@ extern "C" {
         PROTECT(myint = NEW_INTEGER(len));
         p_myint = INTEGER_POINTER(myint);
         for(int i=0;i<n;i++) p_myint[i] = sigma_0[i];
-        UNPROTECT(2);
         delete exp_mod;
         for(int i=0;i<m;i++) delete [] c_samples[ i ];
         delete [] c_samples;
         delete [] sigma_0;
         PutRNGstate();
+        UNPROTECT(2);
         return myint;
     }
     
@@ -287,12 +288,12 @@ extern "C" {
         UNPROTECT(2);
         PROTECT(Rval = allocVector(REALSXP, n));
         for (int i = 0; i < n ; i++) REAL(Rval)[i] = theta[i];
-        UNPROTECT(1);
         delete [] theta;
         for (int i = 0 ; i < m ;  i ++ ) delete [] samples[ i ];
         delete [] samples;
         delete exp_mod;
         PutRNGstate();
+        UNPROTECT(1);
         return Rval;
     }
     //Call("get_log_likelihood",dist_id,    permu.length, num.permus, sigma_0, theta, samples, model)
@@ -343,12 +344,12 @@ extern "C" {
         PROTECT(Rval = allocVector(REALSXP, 1));//vector len 1
         REAL(Rval)[0] = likeli;
         //for (int i = 0; i < n - 1; i++) REAL(Rval)[i] = theta[i];
-        UNPROTECT(1);
         delete exp_mod;
         for (int i = 0 ; i < m ;  i ++ ) delete [] samples[ i ];
         delete [] samples;
         delete [] sigma_0;
         PutRNGstate();
+        UNPROTECT(1);
         return Rval;
     }
     

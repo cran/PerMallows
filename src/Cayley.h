@@ -135,7 +135,11 @@ public:
         for (int i = 2 ; i <= n_; i ++)
             for (int j = 2 ; j < i ; j++)
                 stirling_matrix_[ i ][ j ] = stirling_matrix_[ i - 1 ][ j - 1 ] + (i - 1) * stirling_matrix_[ i - 1 ][ j ];
+        //for (int i = 0 ; i <= n_; i ++)
+          //{for (int j = 0 ; j < n_ ; j++) cout<<stirling_matrix_[ i ][ j ]<<" ";
+          //cout<<endl;}
     }
+    
 
     ~Cayley(){
         for (int i = 0 ; i < n_+1; i ++ ) delete [] stirling_matrix_[ i ];

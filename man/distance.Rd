@@ -4,8 +4,11 @@
 \alias{distance}
 \title{Compute the distance between permutations}
 \usage{
-distance(perm1, perm2 = identity.permutation(length(perm1)),
-  dist.name = "kendall")
+distance(
+  perm1,
+  perm2 = identity.permutation(length(perm1)),
+  dist.name = "kendall"
+)
 }
 \arguments{
 \item{perm1}{a permutation}

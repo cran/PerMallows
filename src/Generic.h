@@ -100,11 +100,11 @@ public:
     void delete_factorials();
     
     double get_factorial_in_table(int i){
-        if(facts_ == NULL || facts_n_ < i ){
+        //if(facts_ == NULL || facts_n_ < i ){
             //run init_factorial(n). count_permus_no_fixed_points does it, 
-            cout <<"load factorial error, get_factorial_in_table "<<endl;
-            exit(1);
-        }
+            //cout <<"load factorial error, get_factorial_in_table "<<endl;
+            //exit(1);
+        //}
         return facts_[i];
     }
     

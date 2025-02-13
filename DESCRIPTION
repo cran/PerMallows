@@ -1,11 +1,18 @@
 Package: PerMallows
 Type: Package
 Title: Permutations and Mallows Distributions
-Version: 1.13
-Date: 2017-04-28
-Author: Ekhine Irurozki <ekhine.irurozqui@ehu.eus>, Borja Calvo
-    <borja.calvo@ehu.eus>, Jose A. Lozano <ja.lozano@ehu.eus>
-Maintainer: Ekhine Irurozki <ekhine.irurozqui@ehu.eus>
+Version: 1.14
+Date: 2025-02-11
+Authors@R: c(
+  person(given = "Ekhine", family = "Irurozki",
+         role = c("aut", "cre"),
+         email = "irurozki@telecom-paris.fr"),
+  person(given = "Borja", family = "Calvo",
+         role = "aut",
+         email = "borja.calvo@ehu.eus"),
+  person(given = c("Jose", "A."), family = "Lozano",
+         role = "aut",
+         email = "ja.lozano@ehu.eus"))
 Description: Includes functions to work with the Mallows and Generalized Mallows
     Models. The considered distances are Kendall's-tau, Cayley, Hamming and Ulam
     and it includes functions for making inference, sampling and learning such
@@ -16,11 +23,16 @@ Description: Includes functions to work with the Mallows and Generalized Mallows
     a given number of inversions, or cycles, or fixed points or even with a given
     length on LIS (longest increasing subsequence).
 License: GPL (>= 2)
-Depends: Rcpp (>= 0.10.3)
+Depends: R (>= 4.0)
 Imports: utils
 LinkingTo: Rcpp
-RoxygenNote: 6.0.1
+RoxygenNote: 7.3.2
+Encoding: UTF-8
 NeedsCompilation: yes
-Packaged: 2017-04-28 19:46:08 UTC; ekhine
+Packaged: 2025-02-13 09:21:59 UTC; ekhi
+Author: Ekhine Irurozki [aut, cre],
+  Borja Calvo [aut],
+  Jose A. Lozano [aut]
+Maintainer: Ekhine Irurozki <irurozki@telecom-paris.fr>
 Repository: CRAN
-Date/Publication: 2017-04-28 23:19:26 UTC
+Date/Publication: 2025-02-13 11:20:05 UTC

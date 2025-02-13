@@ -1,3 +1,11 @@
+#' @useDynLib PerMallows, .registration = TRUE
+NULL
+#' PerMallows: A Package for Sampling and Estimation in Mallows Models
+#'
+#' This package provides methods for sampling from and estimating parameters of Mallows models
+#' based on different distance measures such as Cayley and Ulam.
+#'
+#' @keywords internal Cayley LIS Ulam PerMallows
 # -----------------------------------------
 # Author: Ekhine Irurozki
 #         University of the Basque Country
@@ -19,7 +27,7 @@
 #' is a different permutation of the specified number of items
 #'
 #' @param perm.length number of items in the permutation
-#' @param alert optional ask for confirmation when the number of permtuations to show is very large
+#' @param alert optional ask for confirmation when the number of permutations to show is very large
 #' @return A collection of every permutation of the specified number of items
 #' @export
 #' @examples
@@ -85,19 +93,21 @@ inverse.perm <- function(perm){
   stop("Error in the input parameters: the input must be a permutation or a matrix of permutations")
 }
 
-#' Compose permutations
+#' Compose Permutations
 #'
-#' This function composes two given permtuations. One of the arguments 
-#' can be a collection of permutations, but not both at the same time. In this 
-#' case, every permutation in the collection is composed with the 
-#' other argument
+#' This function composes two permutations or a permutation with a collection of permutations.
+#' If one of the arguments is a collection of permutations, the function will compose each permutation
+#' in the collection with the other argument. Note that both arguments cannot be collections of permutations
+#' at the same time.
 #'
-#' @param perm1 a permtuation or a collection of permutations
-#' @param perm2 a permtuation or a collection of permutations
-#' @return The composition of the permutations
+#' @param perm1 A single permutation (as a vector) or a collection of permutations (as a list of vectors).
+#' @param perm2 A single permutation (as a vector) or a collection of permutations (as a list of vectors).
+#' @return The composition of the permutations. If one of the arguments is a collection, the result will be
+#'   a list of composed permutations.
 #' @export
 #' @examples
-#' compose(c(3,1,2,4), c(4,1,3,2))
+#' # Compose two single permutations
+#' compose(c(3, 1, 2, 4), c(4, 1, 3, 2))
 compose <- function(perm1, perm2){
   if (!is.permutation(perm1) || ! is.permutation(perm2))
     stop("Check parameters")
@@ -143,7 +153,7 @@ is.permutation <- function(perm){
   return(all(bid))
 }
 
-#' Read a text file with a collection of permtuations
+#' Read a text file with a collection of permutations
 #'
 #' This function reads the text file in the specified path and 
 #' checks if each row is a proper permutation
@@ -154,10 +164,11 @@ is.permutation <- function(perm){
 #' @examples
 #' path = system.file("test.txt", package="PerMallows")
 #' sample = read.perms(path)
+#' @importFrom utils read.table
 read.perms <- function(path){
-  sample = as.matrix( read.table(path, sep=" "))
+  sample = as.matrix( utils::read.table(path, sep=" "))
   if (! is.permutation(sample) )
-    stop("Not valid permtuations in the matrix")
+    stop("Not valid permutations in the matrix")
   return(sample)
 }
 
@@ -192,10 +203,10 @@ order.ratings <- function(ratings){
 runif.permutation <- function(n=1 , perm.length){
   x <- c(1:perm.length)
   if ( n == 1 ) {
-    x <- .C("random_permutation", as.integer(perm.length), as.integer(x))[[2]]
+    x <- .C("random_permutation", as.integer(perm.length), as.integer(x), PACKAGE="PerMallows")[[2]]
     return (x)
   }
-  return (t (replicate(n, .C("random_permutation", as.integer(perm.length), as.integer(x))[[2]])))
+  return (t (replicate(n, .C("random_permutation", as.integer(perm.length), as.integer(x), PACKAGE="PerMallows")[[2]])))
 }
 
 #' Compute the frequency matrix
@@ -275,7 +286,7 @@ marginal <- function(h, theta){
   res <- 0
   h[is.na(h)] <- -1
   res<-.C("marginals", as.integer(length(h)), as.integer(.check.distance.name("hamming")), as.integer(h),
-          as.numeric(theta), as.double(res))[5]
+          as.numeric(theta), as.double(res), PACKAGE="PerMallows")[5]
   return (res[[1]]) 
 }
 
@@ -298,7 +309,7 @@ expectation.mm <- function(theta, perm.length,  dist.name="kendall"){
   dist_id = .check.distance.name(dist.name, FALSE)
   expec <- rep(0,perm.length)
   expec<-.C("expectation",  as.integer(dist_id), as.integer(.MALLOWS.MODEL), as.integer(perm.length), 
-            as.double(theta),as.double(expec))[5]
+            as.double(theta),as.double(expec), PACKAGE="PerMallows")[5]
   return (expec[[1]][1]) 
 }
 
@@ -321,7 +332,7 @@ expectation.gmm <- function (theta, dist.name="kendall"){
   else  perm.length <- length(theta) + 1
   expec <- rep(0,perm.length)
   expec<-.C("expectation",  as.integer(dist_id), as.integer(.GENERALIZED.MALLOWS.MODEL), as.integer(perm.length), 
-           as.double(theta),as.double(expec))[5]
+           as.double(theta),as.double(expec), PACKAGE="PerMallows")[5]
  return (expec[[1]] [1:length(theta)]) 
 }
 
@@ -385,7 +396,7 @@ dgmm <- function(perm, sigma0=identity.permutation(length(perm)), theta, dist.na
     res = -1;
   if(.same.length.perms(perm,sigma0) ){
       res<-.C("probability", as.integer(dist_id), as.integer(length(perm)),as.integer(perm),
-                as.integer(sigma0), as.numeric(theta), as.double(res))[6]
+                as.integer(sigma0), as.numeric(theta), as.double(res), PACKAGE="PerMallows")[6]
     }else stop ("The permutations must have the same number of items")
     return( unlist(res) );
 }
@@ -465,10 +476,10 @@ rmm <- function(n, sigma0, theta, dist.name="kendall", sampling.method=NULL, dis
     stop ("No Multistage algorithm for the Ulam distance, choose the Distances sampling algorithm by setting the parameter <sampling.method='distances' > ")
   
   if (algorithm_id == 0)
-    sam <- .Call("distances_sampling", dist_id, perm.length, num.perms, theta)
+    sam <- .Call("distances_sampling", dist_id, perm.length, num.perms, theta, PACKAGE="PerMallows")
   else if (algorithm_id == 1 || algorithm_id == 2 ){
     theta <- rep(theta,perm.length)
-    sam <- .Call("sampling_multi_gibbs_cayley",dist_id,  perm.length, num.perms, theta, .GENERALIZED.MALLOWS.MODEL, algorithm_id)
+    sam <- .Call("sampling_multi_gibbs_cayley",dist_id,  perm.length, num.perms, theta, .GENERALIZED.MALLOWS.MODEL, algorithm_id, PACKAGE="PerMallows")
   }else stop("Choose one of these algorithms: distances, gibbs, multistage")
   if(!all(sigma0 == identity.permutation(perm.length)) ) 
     sam <- compose(sam, sigma0)
@@ -507,7 +518,7 @@ rgmm <- function(n, sigma0, theta, dist.name="kendall", sampling.method="multist
   else if ( sampling.method == "gibbs"      || sampling.method == "gibbs")  algorithm_id = 2
   else stop("Choose one of these sampling.method: multistage, gibbs")
   
-  sam <- .Call("sampling_multi_gibbs_cayley",dist_id, perm.length, num.perms, theta, .GENERALIZED.MALLOWS.MODEL, algorithm_id);
+  sam <- .Call("sampling_multi_gibbs_cayley",dist_id, perm.length, num.perms, theta, .GENERALIZED.MALLOWS.MODEL, algorithm_id, PACKAGE="PerMallows");
   #browser()
   if(!all(sigma0 == identity.permutation(perm.length)) ) 
     sam <- compose(sam, sigma0)
@@ -560,9 +571,9 @@ lmm <- function(data, sigma_0_ini =identity.permutation(dim(data)[2]), dist.name
   if (estim_var == 1 && dist_id == .HAMMING.DISTANCE ) stop ("No approx learning for the Hamming MM, try exact")
   if (estim_var == 0 && (dist_id != .CAYLEY.DISTANCE && dist_id != .HAMMING.DISTANCE) ) 
     stop ("Exact learning only for cayley and Hamming")
-  sigma0 <- .Call("consensus", dist_id, data, 0, estim_var, sigma_0_ini)  
+  sigma0 <- .Call("consensus", dist_id, data, 0, estim_var, sigma_0_ini, PACKAGE="PerMallows")  
   
-  the <- .Call("estimate_theta", dist_id, perm.length, num.perms, sigma0, data, 0)
+  the <- .Call("estimate_theta", dist_id, perm.length, num.perms, sigma0, data, 0, PACKAGE="PerMallows")
   return(list(mode = sigma0, theta = the[1]));
 }
 
@@ -599,8 +610,8 @@ lgmm <- function(data, sigma_0_ini =identity.permutation(dim(data)[2]), dist.nam
   
   if (estim_var == 0 && dist_id != .CAYLEY.DISTANCE ) 
     stop ("Exact leraning only for Cayley")
-  sigma0 <- .Call("consensus", dist_id, data, 1, estim_var, sigma_0_ini)
-  the <- .Call("estimate_theta", dist_id, perm.length, num.perms, sigma0, data, 1)
+  sigma0 <- .Call("consensus", dist_id, data, 1, estim_var, sigma_0_ini, PACKAGE="PerMallows")
+  the <- .Call("estimate_theta", dist_id, perm.length, num.perms, sigma0, data, 1, PACKAGE="PerMallows")
   if ( dist_id == 2 ) theta.len = perm.length
   else  theta.len = perm.length - 1
   return(list(mode = sigma0, theta = the[1:theta.len]));
@@ -643,7 +654,7 @@ lmm.theta <- function(data, sigma_0 =identity.permutation(dim(data)[2]), dist.na
     else stop ("Estimation form disk can only be used with Ulam distance")
   }
   
-  the <- .Call("estimate_theta", dist_id, perm.length, num.perms, sigma_0, data, 0)
+  the <- .Call("estimate_theta", dist_id, perm.length, num.perms, sigma_0, data, 0, PACKAGE="PerMallows")
   return(theta = the[1]);
 }
 
@@ -671,7 +682,7 @@ lgmm.theta <- function(data, sigma_0 =identity.permutation(dim(data)[2]), dist.n
   perm.length <- dim(data)[2]
   dist_id = .check.distance.name(dist.name , TRUE)
   
-  the <- .Call("estimate_theta", dist_id, perm.length, num.perms, sigma_0, data, 1)
+  the <- .Call("estimate_theta", dist_id, perm.length, num.perms, sigma_0, data, 1, PACKAGE="PerMallows")
   if ( dist_id == 2 ) theta.len = perm.length
   else  theta.len = perm.length - 1
   return(theta = the[1:theta.len]);
@@ -689,7 +700,8 @@ lgmm.theta <- function(data, sigma_0 =identity.permutation(dim(data)[2]), dist.n
 #' @examples
 #' generate.aux.files(4)
 generate.aux.files <- function(perm.length){
-  .C("save_counts_to_files", as.integer(perm.length))
+  print("This function has been deprecated. The all code is still included")
+  # .C("save_counts_to_files", as.integer(perm.length), PACKAGE="PerMallows")
 }
 
 ###################   DISTANCE RELATED   ###################
@@ -873,7 +885,7 @@ distance<-function(perm1,perm2=identity.permutation(length(perm1)), dist.name="k
       if (sigma[i] != i ) dist <- dist + 1
   }else 
     dist<-.C("compute_distance", as.integer(dist_id), as.integer(perm.length), 
-             as.integer(perm1), as.integer(perm2), as.integer(dist))[5]
+             as.integer(perm1), as.integer(perm2), as.integer(dist), PACKAGE="PerMallows")[5]
   return(unlist(dist));
 }
 
@@ -936,7 +948,7 @@ count.perms <- function(perm.length, dist.value, dist.name="kendall", disk=FALSE
     }
     else stop ("Counting form disk can only be used with Ulam distance")
   }
-  count <- .C("count_permus_at_dist", as.integer(dist_id), as.integer(perm.length),as.integer( dist.value ),as.double(count))[4]
+  count <- .C("count_permus_at_dist", as.integer(dist_id), as.integer(perm.length),as.integer( dist.value ),as.double(count), PACKAGE="PerMallows")[4]
   return (count[[1]]) ## = unlist(count) 
 }
 
@@ -954,13 +966,13 @@ count.perms <- function(perm.length, dist.value, dist.name="kendall", disk=FALSE
 #' @return A sample of permutations at the given distance
 #' @export
 #' @examples
-#' rdist(1, 4, 2 ) 
-#' rdist(1, 4, 2, "ulam")
+#' rdist.perm(1, 4, 2 ) 
+#' rdist.perm(1, 4, 2, "ulam")
 #' len <-  3
-#' rdist(n = 1, perm.length = len, dist.value = len, "h") #derangement
+#' rdist.perm(n = 1, perm.length = len, dist.value = len, "h") #derangement
 #' cycles <- 2
-#' rdist(n = 1, perm.length = len, dist.value = len - cycles, "c") #permutation with 2 cycles
-rdist <- function(n, perm.length, dist.value, dist.name="kendall"){
+#' rdist.perm(n = 1, perm.length = len, dist.value = len - cycles, "c") #permutation with 2 cycles
+rdist.perm <- function(n, perm.length, dist.value, dist.name="kendall"){
   num.perms <- n
   dist_id = .check.distance.name(dist.name)
   if ( dist.value < 0 ) stop("The distance must be greater than 0")
@@ -970,7 +982,7 @@ rdist <- function(n, perm.length, dist.value, dist.name="kendall"){
           " items, which is ",maxi.dist(perm.length, dist.name))
   if (dist_id == .HAMMING.DISTANCE && dist.value == 1 ) return (0)
   res<-.Call("get_random_sample_at_dist_d", as.integer(dist_id), 
-             as.integer(perm.length),as.integer(num.perms),as.integer( dist.value ))
+             as.integer(perm.length),as.integer(num.perms),as.integer( dist.value ), PACKAGE="PerMallows")
   return(res)
 }
 
@@ -998,7 +1010,7 @@ perm2decomp <- function(perm, dist.name="kendall"){
   vec <- c(1:perm.length) #only the first (perm.lenth-1) pos will be returned
   #the last equals 0
   res <- .C("get_altern_repre_for_permu", as.integer(dist_id), as.integer(perm.length), 
-            as.integer(perm), as.integer(vec))[4]
+            as.integer(perm), as.integer(vec), PACKAGE="PerMallows")[4]
   return(unlist(res)[ 1 : perm.length - 1 ] )
 }
 
@@ -1030,7 +1042,7 @@ decomp2perm <- function(vec, dist.name="kendall"){
   }
   sigma <- rep(0,perm.length)
   sigma <- .C("get_permu_given_altern_repre", as.integer(dist_id), 
-              as.integer(perm.length), as.integer(vec), as.integer(sigma))[4]
+              as.integer(perm.length), as.integer(vec), as.integer(sigma), PACKAGE="PerMallows")[4]
   return(unlist(sigma))
 }
 
@@ -1041,7 +1053,7 @@ decomp2perm <- function(vec, dist.name="kendall"){
 #' @description
 #' A rda file containing a sample of permutations
 #' @format
-#' Each row is a permtuation
+#' Each row is a permutation
 NULL
 #' @name perm.sample.small
 #' @docType data
@@ -1049,7 +1061,7 @@ NULL
 #' @description
 #' A rda file containing a sample of permutations
 #' @format
-#' Each row is a permtuation
+#' Each row is a permutation
 NULL
 #' @name data.apa
 #' @docType data
@@ -1057,7 +1069,7 @@ NULL
 #' @description
 #' A rda file containing a sample of permutations of the American Psychology Association
 #' @format
-#' Each row is a permtuation
+#' Each row is a permutation
 NULL
 #' @name data.order
 #' @docType data
@@ -1065,6 +1077,6 @@ NULL
 #' @description
 #' A rda file containing a sample of permutations
 #' @format
-#' Each row is a permtuation
+#' Each row is a permutation
 NULL
 

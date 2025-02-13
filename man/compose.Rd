@@ -2,24 +2,26 @@
 % Please edit documentation in R/PerMallows.R
 \name{compose}
 \alias{compose}
-\title{Compose permutations}
+\title{Compose Permutations}
 \usage{
 compose(perm1, perm2)
 }
 \arguments{
-\item{perm1}{a permtuation or a collection of permutations}
+\item{perm1}{A single permutation (as a vector) or a collection of permutations (as a list of vectors).}
 
-\item{perm2}{a permtuation or a collection of permutations}
+\item{perm2}{A single permutation (as a vector) or a collection of permutations (as a list of vectors).}
 }
 \value{
-The composition of the permutations
+The composition of the permutations. If one of the arguments is a collection, the result will be
+  a list of composed permutations.
 }
 \description{
-This function composes two given permtuations. One of the arguments 
-can be a collection of permutations, but not both at the same time. In this 
-case, every permutation in the collection is composed with the 
-other argument
+This function composes two permutations or a permutation with a collection of permutations.
+If one of the arguments is a collection of permutations, the function will compose each permutation
+in the collection with the other argument. Note that both arguments cannot be collections of permutations
+at the same time.
 }
 \examples{
-compose(c(3,1,2,4), c(4,1,3,2))
+# Compose two single permutations
+compose(c(3, 1, 2, 4), c(4, 1, 3, 2))
 }

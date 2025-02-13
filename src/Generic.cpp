@@ -191,8 +191,7 @@ long double Generic::count_permus_with_at_least_k_unfixed_points(int n, int k){
 double Generic::count_perm_fixed_points(int k, int j){
     if(j<0 || j>k) return 0;
     if(k == 0 && j == 0) return 1;
-    return count_perm_fixed_points(k-1, j-1) + count_perm_fixed_points(k - 1, j)*(k - 1  - j)
-    + count_perm_fixed_points(k - 1, j + 1)*(j + 1);
+    return count_perm_fixed_points(k-1, j-1) + count_perm_fixed_points(k - 1, j)*(k - 1  - j) + count_perm_fixed_points(k - 1, j + 1)*(j + 1);
     //(1) For every j < 0 or j > k : f(k, j) = 0.
     //(2) f(0, 0) = 1.
     //(3) For every k > 1 and k ≥ j ≥ 0, f(k, j) = f(k − 1, j − 1) + f(k − 1, j)·(k − 1  − j) + f(k − 1, j + 1)·(j + 1)

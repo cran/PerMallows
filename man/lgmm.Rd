@@ -4,8 +4,12 @@
 \alias{lgmm}
 \title{Learn a Generalized Mallows Model}
 \usage{
-lgmm(data, sigma_0_ini = identity.permutation(dim(data)[2]),
-  dist.name = "kendall", estimation = "approx")
+lgmm(
+  data,
+  sigma_0_ini = identity.permutation(dim(data)[2]),
+  dist.name = "kendall",
+  estimation = "approx"
+)
 }
 \arguments{
 \item{data}{the matrix with the permutations to estimate}

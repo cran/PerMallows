@@ -4,8 +4,7 @@
 \alias{rgmm}
 \title{Sample a Generalized Mallows Model}
 \usage{
-rgmm(n, sigma0, theta, dist.name = "kendall",
-  sampling.method = "multistage")
+rgmm(n, sigma0, theta, dist.name = "kendall", sampling.method = "multistage")
 }
 \arguments{
 \item{n}{the number of permutations to be generated}

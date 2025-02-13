@@ -9,7 +9,7 @@ permutations.of(perm.length, alert = TRUE)
 \arguments{
 \item{perm.length}{number of items in the permutation}
 
-\item{alert}{optional ask for confirmation when the number of permtuations to show is very large}
+\item{alert}{optional ask for confirmation when the number of permutations to show is very large}
 }
 \value{
 A collection of every permutation of the specified number of items

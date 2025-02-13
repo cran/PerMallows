@@ -4,8 +4,12 @@
 \alias{dgmm}
 \title{Calculate the probability of a permutation in a GMM}
 \usage{
-dgmm(perm, sigma0 = identity.permutation(length(perm)), theta,
-  dist.name = "kendall")
+dgmm(
+  perm,
+  sigma0 = identity.permutation(length(perm)),
+  theta,
+  dist.name = "kendall"
+)
 }
 \arguments{
 \item{perm}{permutation whose probability wants to be known}

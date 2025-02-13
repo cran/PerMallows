@@ -4,8 +4,15 @@
 \alias{rmm}
 \title{Sample a Mallows Model}
 \usage{
-rmm(n, sigma0, theta, dist.name = "kendall", sampling.method = NULL,
-  disk = FALSE, alert = TRUE)
+rmm(
+  n,
+  sigma0,
+  theta,
+  dist.name = "kendall",
+  sampling.method = NULL,
+  disk = FALSE,
+  alert = TRUE
+)
 }
 \arguments{
 \item{n}{the number of permutations to be generated}

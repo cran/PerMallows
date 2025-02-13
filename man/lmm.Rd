@@ -4,8 +4,13 @@
 \alias{lmm}
 \title{Learn a Mallows Model}
 \usage{
-lmm(data, sigma_0_ini = identity.permutation(dim(data)[2]),
-  dist.name = "kendall", estimation = "approx", disk = FALSE)
+lmm(
+  data,
+  sigma_0_ini = identity.permutation(dim(data)[2]),
+  dist.name = "kendall",
+  estimation = "approx",
+  disk = FALSE
+)
 }
 \arguments{
 \item{data}{the matrix with the permutations to estimate}

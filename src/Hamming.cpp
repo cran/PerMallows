@@ -320,6 +320,11 @@ void Hamming::multistage_sampling(int m, double *theta, int **samples){
     
     //initialize esp_ini_;
     gen.elementary_symmetric_polynomial( theta, n_ ,t_, aux_esp_, esp_ini_ );
+    /*cout<<endl;
+    for (int i = 0 ;  i < n_+1 ; i ++ )
+      cout<<aux_esp_[i][3]<<" ";
+    cout<<endl;*/
+    
     for (int s = 0 ; s < m ; s ++) {
         marg = marg_ini;
         for (int items_set = 0 ; items_set < n_; items_set++) {

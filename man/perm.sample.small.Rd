@@ -4,7 +4,9 @@
 \name{perm.sample.small}
 \alias{perm.sample.small}
 \title{Sample of permutations}
-\format{Each row is a permtuation}
+\format{
+Each row is a permutation
+}
 \description{
 A rda file containing a sample of permutations
 }

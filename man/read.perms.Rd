@@ -2,7 +2,7 @@
 % Please edit documentation in R/PerMallows.R
 \name{read.perms}
 \alias{read.perms}
-\title{Read a text file with a collection of permtuations}
+\title{Read a text file with a collection of permutations}
 \usage{
 read.perms(path)
 }

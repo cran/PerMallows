@@ -73,7 +73,13 @@ void Kendall::random_permu_at_dist_d( int dist, int*sigma  ){
     double* acum = new double[ n_ ];
     int*v = new int[ n_ ];
     v[ n_ - 1 ] = 0 ;
-    int i;
+    int i, aux;
+    bool reversed = false; 
+    if (dist > n_*(n_ - 1)/4) {
+      // if the distance is larger than the half do the other way and reverse. To avoid numerical errors
+      dist = n_*(n_ - 1)/2 - dist;
+      reversed = true;
+    }
     for(i = 0 ; ( i < n_ && dist > 0 );i ++ ) {
         int rest_max_dist = (n_ - i - 1 ) * ( n_ - i - 2 ) / 2;//con los restantes n' puedes tener distMAx de binom(n`)(2)
         if(rest_max_dist  >= dist )acum[ 0 ] = count_[ n_ - i - 1 ][ dist ];
@@ -92,7 +98,12 @@ void Kendall::random_permu_at_dist_d( int dist, int*sigma  ){
     }
     for (int j = i; j < n_; j++) v[ j ] = 0; //the last n-i positions
     dist_decomp_vector2perm(v, sigma);
-    
+    if (reversed)
+      for (i = 0; i < n_/2; i++){
+        aux = sigma[i];
+        sigma[i] = sigma[n_-i-1];
+        sigma[n_-i-1] = aux;
+      }
     delete [] v;
     delete [] acum;
 }
@@ -152,13 +163,19 @@ void Kendall::multistage_sampling(int m, double*theta, int**samples){
     
     for(int i = 0 ; i < n_ - 1 ; i ++)
         psi[i] = (1 - exp(( - n_ + i )*(theta[ i ])))/(1 - exp( -theta[i]));
+    //for(int i = 0 ; i < n_ - 1 ; i ++) cout<<psi[i]<<" ";
 
     for(int j = 0 ; j < n_ - 1 ; j++){
         vprobs[j][0] = 1 / psi[j];
         for(int r = 1 ; r < n_ - j ; r ++) 
             vprobs[j][r] = vprobs[j][ r - 1 ] + exp( -theta[ j ] * r ) / psi[ j ];
-        
     }
+    /*for(int j = 0 ; j < n_  ; j++){
+      for(int r = 0 ; r < n_ - j; r ++) {
+        cout<<vprobs[j][r]<<" ";
+      }
+      cout<<endl;
+    }*/
     for(int samp = 0 ; samp < m ; samp++){
         for( int i = 0 ; i < n_ - 1 ; i ++ ){
             int target_v = 0 ;

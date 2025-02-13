@@ -15,8 +15,8 @@
 void    Ulam_disk::read_permus_per_dist(){
     if ( num_permus_per_dist_[ 0 ] == 0 ){//not initialized
         //num_permus_per_dist_num_permus_per_dist_ = new long double[ n_ ];
-        char integer_string[5];
-        sprintf(integer_string, "%d", n_);
+        char integer_string[5] = "";
+        ////(removed) sprintf(integer_string, "%d", n_); REMOVED
         char str_permus_per_dist[600];
         strcpy(str_permus_per_dist, str_base_path);
         strcat(str_permus_per_dist, "permus_per_dist_");
@@ -34,99 +34,132 @@ void    Ulam_disk::read_permus_per_dist(){
     }
 }
 
-
-void Ulam_disk::save_counts_to_file_bin(){
-    /* adapted from ZS1: Zoghbi, Antoine and Stojmenovic, Ivan: Fast Algorithms for Generating Integer Partitions. International Journal of Computer Mathematics, 70, 1998, 319-332.
-     generaes partitions in  anti-lexicographic order */
-    ofstream file_permus_per_dist;
-//    ofstream file_permus_per_shape;
-    FILE *file_permus_per_shape = NULL;
-    //file = fopen(str_permus_per_shape, "r");
-    
-    char integer_string[5];
-    sprintf(integer_string, "%d", n_);
-    char str_permus_per_shape[500] ;//= "/Users/eki/Dropbox/permus/prj/perms_mallows/permus_per_shape_"; // un file e estos por cada n y distance
-    strcpy(str_permus_per_shape, str_base_path);
-    strcat(str_permus_per_shape, "permus_per_shape_bin_");
-    
-    char str_permus_per_shape_n_d[600];
-    char str_permus_per_dist[600] ;//= "/Users/eki/Dropbox/permus/prj/perms_mallows/permus_per_dist_";
-    strcpy(str_permus_per_dist, str_base_path);
-    strcat(str_permus_per_dist, "permus_per_dist_");
-    
-    strcat(str_permus_per_shape, integer_string);
-    strcat(str_permus_per_dist, integer_string);
-    
-    unsigned char k;                  //length of figures
-    unsigned char *vector     = NULL; //where the current figure is stored
-    int           gen_result;         //return value of generation functions
-    int           prev_distance = -1 , dist ;
-    int           part_len;
-    long double     permus_per_shape = 0;
-    vector = (unsigned char *)malloc(sizeof(unsigned char) * n_ );
-    if(vector == NULL)    {
-        //ERROR fprintf(stderr, "error: insufficient memory\n");exit(EXIT_FAILURE);
+void Ulam_disk::save_counts_to_file_bin() {
+  // Use ofstream for consistent file handling
+  ofstream file_permus_per_shape;
+  ofstream file_permus_per_dist;
+  
+  char integer_string[5];
+  char str_permus_per_shape[500];
+  char str_permus_per_shape_n_d[600];
+  char str_permus_per_dist[600];
+  
+  strcpy(str_permus_per_shape, str_base_path);
+  strcat(str_permus_per_shape, "permus_per_shape_bin_");
+  
+  strcpy(str_permus_per_dist, str_base_path);
+  strcat(str_permus_per_dist, "permus_per_dist_");
+  
+  // Convert integer to string safely using snprintf instead of sprintf
+  snprintf(integer_string, sizeof(integer_string), "%d", n_);
+  strcat(str_permus_per_shape, integer_string);
+  strcat(str_permus_per_dist, integer_string);
+  
+  unsigned char k;
+  unsigned char *vector = NULL;
+  int gen_result;
+  int prev_distance = -1, dist;
+  int part_len;
+  long double permus_per_shape = 0;
+  
+  vector = (unsigned char *)malloc(sizeof(unsigned char) * n_);
+  if (vector == NULL) {
+    error("Error: Insufficient memory for vector.");
+    return; // Exit function on memory allocation failure
+  }
+  
+  // Initialize num_permus_per_dist_
+  for (int i = 0; i < n_; i++) {
+    num_permus_per_dist_[i] = 0;
+  }
+  
+  Ferrers_diagram *f;
+  gen_result = gen_part_init(vector, n_, &k);
+  int *info = new int[n_ + 3];
+  
+  while (gen_result == GEN_NEXT) {
+    part_len = (int)k;
+    int *part = new int[part_len]; // DO NOT delete, member of Ferrers_diagram
+    for (int i = 0; i < part_len; i++) {
+      part[i] = (int)vector[i];
     }
-    for (int i = 0 ; i < n_ ;i++) num_permus_per_dist_[ i ] = 0 ;
     
-    Ferrers_diagram*f;
-    gen_result = gen_part_init(vector, n_, &k);
-    int * info = new int [ n_ + 3 ];
-    while(gen_result == GEN_NEXT ) {
-        part_len = (int)k;
-        int*part = new int[part_len];//DO NOT delete, member of Ferrers_diagram
-        for(int i = 0 ; i < part_len; i++) part[i]=(int)vector[i];
-        dist = part[ 0 ];
-        
-        f = new Ferrers_diagram(n_, part , part_len);
-        f->calculate_hook_length(facts_[ n_ ]);
-        dist = f->get_resulting_distance();
-        num_permus_per_dist_[ dist ] += f->get_num_permus();
-        if ( dist != prev_distance ){
-            permus_per_shape = 0;
-            //cout<<"Generating shape at distance "<<dist<<endl;
-//            if (file_permus_per_shape.is_open() ) file_permus_per_shape.close();
-            if (file_permus_per_shape != NULL ) fclose(file_permus_per_shape);
-            strcpy(str_permus_per_shape_n_d, str_permus_per_shape);
-            strcat(str_permus_per_shape_n_d, "_");
-            sprintf(integer_string, "%d", dist );
-            strcat(str_permus_per_shape_n_d, integer_string);
-//            file_permus_per_shape.open(str_permus_per_shape_n_d);
-            file_permus_per_shape = fopen(str_permus_per_shape_n_d, "w");
-        }
-        permus_per_shape += f->get_num_permus();
-        /*file_permus_per_shape << permus_per_shape <<" ";
-        for ( int i =  0; i < part_len ; i++ )file_permus_per_shape<<part[ i ]<<" ";
-        file_permus_per_shape<<endl;*/
-        
-        int np_exp = (int) log10(permus_per_shape);
-        long double aux = pow(10, np_exp);
-        int np_significant_left = (int) floor( (double) permus_per_shape / aux);
-        double np_significant_dou =  (double) permus_per_shape / aux - np_significant_left;
-        int np_significant_right = np_significant_dou * 1000000;
-        info [0] = np_significant_left;
-        info [1] = np_significant_right;
-        info [2] = np_exp;
-        for (int i = 0 ; i < part_len ; i++)
-            info[ i + 3 ] = part[ i ];
-        for (int i = part_len + 3 ; i < n_ + 3 ; i++) info[ i ] = 0;
-
-        //fwrite(info, sizeof(int [n_ + 3 ]), 1, file_permus_per_shape);
-        fwrite(info, sizeof(int) * ( n_ + 3 ), 1, file_permus_per_shape);
-        
-        prev_distance = dist;
-        gen_result = gen_part_next(vector, &k, 0);
-        
-        delete f ;
+    dist = part[0];
+    
+    f = new Ferrers_diagram(n_, part, part_len);
+    f->calculate_hook_length(facts_[n_]);
+    dist = f->get_resulting_distance();
+    num_permus_per_dist_[dist] += f->get_num_permus();
+    
+    if (dist != prev_distance) {
+      permus_per_shape = 0;
+      
+      // Open new file when distance changes
+      if (file_permus_per_shape.is_open()) {
+        file_permus_per_shape.close();
+      }
+      
+      strcpy(str_permus_per_shape_n_d, str_permus_per_shape);
+      strcat(str_permus_per_shape_n_d, "_");
+      snprintf(integer_string, sizeof(integer_string), "%d", dist);
+      strcat(str_permus_per_shape_n_d, integer_string);
+      
+      // Open file for writing
+      file_permus_per_shape.open(str_permus_per_shape_n_d, ios::binary);
+      if (!file_permus_per_shape.is_open()) {
+        error("Error: Failed to open file for writing: %s", str_permus_per_shape_n_d);
+        break; // Exit the loop if the file cannot be opened
+      }
     }
-    free(vector);
-    delete [] info;
-    fclose(file_permus_per_shape);
-
-    //cout<<str_permus_per_dist<<endl;
-    file_permus_per_dist.open (str_permus_per_dist);
-    for (int i = 0 ; i < n_; i++ ){file_permus_per_dist<< num_permus_per_dist_[ i ]<<endl ;}
+    
+    permus_per_shape += f->get_num_permus();
+    
+    // Process the data to write to file
+    int np_exp = (int)log10(permus_per_shape);
+    long double aux = pow(10, np_exp);
+    int np_significant_left = (int)floor((double)permus_per_shape / aux);
+    double np_significant_dou = (double)permus_per_shape / aux - np_significant_left;
+    int np_significant_right = np_significant_dou * 1000000;
+    
+    info[0] = np_significant_left;
+    info[1] = np_significant_right;
+    info[2] = np_exp;
+    
+    for (int i = 0; i < part_len; i++) {
+      info[i + 3] = part[i];
+    }
+    
+    // Fill remaining entries with zeros
+    for (int i = part_len + 3; i < n_ + 3; i++) {
+      info[i] = 0;
+    }
+    
+    // Write to file in binary
+    file_permus_per_shape.write(reinterpret_cast<char *>(info), sizeof(int) * (n_ + 3));
+    
+    prev_distance = dist;
+    gen_result = gen_part_next(vector, &k, 0);
+    
+    delete f;
+    delete[] part;
+  }
+  
+  free(vector);
+  delete[] info;
+  if (file_permus_per_shape.is_open()) {
+    file_permus_per_shape.close();
+  }
+  
+  // Write num_permus_per_dist_ to a separate file
+  file_permus_per_dist.open(str_permus_per_dist, ios::out);
+  if (file_permus_per_dist.is_open()) {
+    for (int i = 0; i < n_; i++) {
+      file_permus_per_dist << num_permus_per_dist_[i] << endl;
+    }
     file_permus_per_dist.close();
+  } else {
+    error("Error: Failed to open file for writing: %s", str_permus_per_dist);
+  }
 }
 
 
@@ -198,15 +231,15 @@ void Ulam_disk::distances_sampling(int m, double theta, int **samples){
 
 void Ulam_disk::read_mutiple_shapes_from_file_bin(int d, double * bounds, int num_bounds, int ** shapes, int*shape_len){
     
-    char integer_string[5];
+    char integer_string[5] = "";
     
-    sprintf(integer_string, "%d", n_ );
+    //(removed) sprintf(integer_string, "%d", n_ );
     char str_permus_per_shape[500] ;
     strcpy (str_permus_per_shape, str_base_path);
     strcat(str_permus_per_shape, "permus_per_shape_bin_");
     strcat(str_permus_per_shape, integer_string);
     strcat(str_permus_per_shape, "_");
-    sprintf(integer_string, "%d", d);
+    //(removed) sprintf(integer_string, "%d", d);
     strcat(str_permus_per_shape, integer_string);
     
     //ifstream  file;

@@ -4,8 +4,12 @@
 \alias{lmm.theta}
 \title{MLE for theta - Mallows Model}
 \usage{
-lmm.theta(data, sigma_0 = identity.permutation(dim(data)[2]),
-  dist.name = "kendall", disk = FALSE)
+lmm.theta(
+  data,
+  sigma_0 = identity.permutation(dim(data)[2]),
+  dist.name = "kendall",
+  disk = FALSE
+)
 }
 \arguments{
 \item{data}{the matrix with the permutations to estimate}

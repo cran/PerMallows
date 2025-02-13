@@ -666,12 +666,13 @@ double Cayley::estimate_consensus_exact_gmm_core(int m, int pos, int ** samples,
                     samples_inv_freq[pos][it]++;
                     samples_inv_freq[x-1][y]++;
                 }
-                /*if(trace){
-                    for (int k = 0 ; k < n_ ; k ++ ) cout<<samples[ s ][ k ]<<" ";cout<<" sample ";
+                if(trace){
+                  /*    for (int k = 0 ; k < n_ ; k ++ ) cout<<samples[ s ][ k ]<<" ";cout<<" sample ";
                     for (int k = 0 ; k < n_ ; k ++ ) cout<<samples_inv[ s ][ k ]<<" ";cout<<" sampInv ";
                     for (int i = 0 ; i < n_ ; i ++ ) cout<<current_sigma_inv[ i ]<<" ";cout<<" sigmaInv ";
                     for (int i = 0 ; i < n_ ; i ++ ) cout<<current_sigma[ i ]<<" ";cout<<" sigma (v3)"<<endl;;
-                }*/
+                   */
+                  }
                 //in this case the distance has incresed in one, x[maxItemInCylce] was 0 and now = 1
             }
             
@@ -788,12 +789,12 @@ double Cayley::estimate_consensus_exact_mm_core(int m, int pos, int ** samples, 
                     pos_swaps[ s ] =y;
                     x_incr++;
                 }
-               /* if(trace)
-                {   for (int k = 0 ; k < n_ ; k ++) cout<<samples[ s ][ k ]<<" ";cout<<" sample ";
+                if(trace)
+                { /*  for (int k = 0 ; k < n_ ; k ++) cout<<samples[ s ][ k ]<<" ";cout<<" sample ";
                     for (int k = 0 ; k < n_ ; k ++) cout<<samples_inv[ s ][ k ]<<" ";cout<<" sampInv ";
                     for (int i = 0 ; i < n_; i ++ ) cout<<current_sigma_inv[ i ]<<" ";cout<<" sigmaInv ";
                     for (int i = 0 ; i < n_; i ++ ) cout<<current_sigma[ i ]<<" ";cout<<" sigma (v3 MM)"<<endl;;
-                }*/
+                   */}
                 //in this case the distance has incresed in one, x[maxItemInCylce] was 0 and now = 1
             }
             
